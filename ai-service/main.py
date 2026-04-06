@@ -1,26 +1,44 @@
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel
-from google import genai
+import google.generativeai as genai
 from dotenv import load_dotenv
+from agent import graph
 
 load_dotenv()
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-interviewer_prompt = """
-You are a strict, senior FAANG software engineer conducting a technical coding interview.
-The user is a candidate. 
-Do not give away the direct answer to the problem. 
-If their solution is suboptimal, point out the time or space complexity inefficiency and ask them to optimize it.
-If they are completely stuck, provide a very small hint about which data structure to use.
-Keep your responses concise, professional, and strictly related to Data Structures and Algorithms.
-"""
+personas = {
+    "dsa": """
+        You are a strict, senior FAANG software engineer conducting a technical coding interview.
+        Do not give away the direct answer. 
+        If their solution is suboptimal, point out the time or space complexity inefficiency.
+        If they are stuck, provide a small hint about which data structure to use.
+    """,
+    "frontend": """
+        You are a Lead Frontend Engineer conducting a React and Node.js interview.
+        Do not give away the direct answer.
+        Challenge the candidate on component re-rendering, hook dependencies, state management, and API integration.
+        Ensure their code follows modern ES6+ and React best practices.
+    """,
+    "behavioral": """
+        You are a strict but fair Engineering Manager conducting a behavioral interview.
+        Do not let the candidate get away with vague answers.
+        Force them to use the STAR method (Situation, Task, Action, Result).
+        If they don't specify their exact personal contribution to a project, ask them to clarify.
+    """
+}
 
 app = FastAPI()
 
 class UserInput(BaseModel):
     message: str
+    domain: str = "dsa" 
+
+class GradeRequest(BaseModel):
+    topic: str
+    user_code: str
 
 @app.get("/")
 def read_root():
@@ -28,11 +46,26 @@ def read_root():
 
 @app.post("/ask")
 async def ask_ai(user_input: UserInput):
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        config={
-            "system_instruction": interviewer_prompt
-        },
-        contents=user_input.message
+    system_prompt = personas.get(user_input.domain, personas["dsa"])
+    
+    dynamic_model = genai.GenerativeModel(
+        model_name='gemini-2.5-flash',
+        system_instruction=system_prompt
     )
+    
+    response = dynamic_model.generate_content(user_input.message)
     return {"reply": response.text}
+
+@app.post("/grade")
+async def evaluate_submission(request: GradeRequest):
+    initial_state = {
+        "topic": request.topic,
+        "user_code": request.user_code
+    }
+    
+    result = graph.invoke(initial_state)
+    
+    return {
+        "is_passed": result.get("is_passed", False),
+        "feedback": result.get("feedback", "Error generating feedback.")
+    }
