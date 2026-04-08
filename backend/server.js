@@ -3,6 +3,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const axios = require('axios');
 const { OAuth2Client } = require('google-auth-library');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
@@ -15,6 +16,53 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+app.post('/api/auth/signup', async (req, res) => {
+    const { email, password, name } = req.body;
+    try {
+        const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
+
+        const newUser = await pool.query(
+            'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email, name, avatar_url',
+            [email, passwordHash, name]
+        );
+
+        res.json({ user: newUser.rows[0] });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error during signup' });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userResult.rows.length === 0) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        const user = userResult.rows[0];
+        
+        if (!user.password_hash) {
+            return res.status(400).json({ error: 'Please login with Google for this account' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        res.json({ user: { id: user.id, email: user.email, name: user.name, avatar_url: user.avatar_url } });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error during login' });
+    }
+});
+
 app.post('/api/auth/google', async (req, res) => {
     const { credential } = req.body;
     try {
@@ -25,12 +73,17 @@ app.post('/api/auth/google', async (req, res) => {
         
         const { sub: googleId, email, name, picture } = ticket.getPayload();
 
-        let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
+        let userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         
         if (userResult.rows.length === 0) {
             userResult = await pool.query(
                 'INSERT INTO users (google_id, email, name, avatar_url) VALUES ($1, $2, $3, $4) RETURNING *',
                 [googleId, email, name, picture]
+            );
+        } else if (!userResult.rows[0].google_id) {
+            userResult = await pool.query(
+                'UPDATE users SET google_id = $1, avatar_url = $2 WHERE email = $3 RETURNING *',
+                [googleId, picture, email]
             );
         }
         
