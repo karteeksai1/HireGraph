@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const axios = require('axios');
+const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
 
 const app = express();
@@ -12,6 +13,31 @@ app.use(express.json());
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
+});
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+app.post('/api/auth/google', async (req, res) => {
+    const { credential } = req.body;
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        
+        const { sub: googleId, email, name, picture } = ticket.getPayload();
+
+        let userResult = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
+        
+        if (userResult.rows.length === 0) {
+            userResult = await pool.query(
+                'INSERT INTO users (google_id, email, name, avatar_url) VALUES ($1, $2, $3, $4) RETURNING *',
+                [googleId, email, name, picture]
+            );
+        }
+        
+        res.json({ user: userResult.rows[0] });
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid Google Token' });
+    }
 });
 
 app.get('/health', async (req, res) => {
