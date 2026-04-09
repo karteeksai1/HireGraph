@@ -13,7 +13,9 @@ pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("hiregraph-dsa-v2")
 
 class InterviewState(TypedDict):
+    domain: str
     topic: str
+    language: str
     question_text: str
     optimal_time: str
     optimal_space: str
@@ -24,7 +26,8 @@ class InterviewState(TypedDict):
     chat_history: List[dict]
 
 def retrieve_question(state: InterviewState):
-    topic_query = state.get("topic", "Arrays")
+    topic_query = state.get("topic", "Linked Lists")
+    domain_query = state.get("domain", "dsa")
     
     embedding_response = client.models.embed_content(
         model="gemini-embedding-001",
@@ -36,26 +39,37 @@ def retrieve_question(state: InterviewState):
     search_results = index.query(
         vector=query_vector,
         top_k=1,
+        namespace=domain_query,
         include_metadata=True
     )
     
+    if not search_results['matches']:
+        return {
+            "question_text": f"Could not find a specific question for {topic_query} in the {domain_query} domain.",
+            "optimal_time": "N/A",
+            "optimal_space": "N/A",
+            "optimal_data_structure": "N/A"
+        }
+        
     metadata = search_results['matches'][0]['metadata']
     
     return {
-        "question_text": metadata["question"],
-        "optimal_time": metadata["optimal_time"],
-        "optimal_space": metadata["optimal_space"],
-        "optimal_data_structure": metadata["optimal_data_structure"]
+        "question_text": metadata.get("question", ""),
+        "optimal_time": metadata.get("optimal_time", ""),
+        "optimal_space": metadata.get("optimal_space", ""),
+        "optimal_data_structure": metadata.get("optimal_data_structure", "")
     }
 
 def grade_submission(state: InterviewState):
     user_code = state.get("user_code", "")
+    language = state.get("language", "python")
     
     if not user_code:
         return {"is_passed": False, "feedback": "No code provided."}
 
     prompt = f"""
     You are a strict FAANG interviewer. Evaluate this code.
+    Programming Language: {language.upper()}
     Question: {state.get('question_text')}
     Required Time Complexity: {state.get('optimal_time')}
     Required Space Complexity: {state.get('optimal_space')}
@@ -65,7 +79,7 @@ def grade_submission(state: InterviewState):
     {user_code}
     
     Respond strictly in JSON format with exactly two keys:
-    "is_passed": true if the code is logically correct AND meets the required complexities. False otherwise.
+    "is_passed": true if the code is logically correct, follows {language.upper()} best practices, AND meets the required complexities. False otherwise.
     "feedback": A short, professional explanation of why it passed or failed. If it failed, give a hint.
     """
     
@@ -123,7 +137,9 @@ def hasCycle(head):
     """
     
     initial_state = {
+        "domain": "dsa",
         "topic": "Linked Lists",
+        "language": "python",
         "user_code": mock_perfect_code
     }
     

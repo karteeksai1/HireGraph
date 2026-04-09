@@ -38,7 +38,23 @@ class UserInput(BaseModel):
 
 class GradeRequest(BaseModel):
     topic: str
+    language: str
     user_code: str
+
+@app.post("/grade")
+async def evaluate_submission(request: GradeRequest):
+    initial_state = {
+        "topic": request.topic,
+        "language": request.language,
+        "user_code": request.user_code
+    }
+    
+    result = graph.invoke(initial_state)
+    
+    return {
+        "is_passed": result.get("is_passed", False),
+        "feedback": result.get("feedback", "Error generating feedback.")
+    }
 
 @app.get("/")
 def read_root():

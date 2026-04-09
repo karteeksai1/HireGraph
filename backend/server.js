@@ -116,7 +116,7 @@ app.post('/api/interview/start', async (req, res) => {
 });
 
 app.post('/api/interview/submit', async (req, res) => {
-    const { sessionId, topic, userCode } = req.body;
+    const { sessionId, topic, language, userCode } = req.body;
     try {
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, submitted_code) VALUES ($1, $2, $3)',
@@ -125,6 +125,7 @@ app.post('/api/interview/submit', async (req, res) => {
 
         const aiResponse = await axios.post('http://127.0.0.1:8000/grade', {
             topic: topic,
+            language: language,
             user_code: userCode
         });
 
@@ -140,7 +141,6 @@ app.post('/api/interview/submit', async (req, res) => {
         res.status(500).json({ error: 'AI Evaluation Failed', details: err.message });
     }
 });
-
 const PORT = process.env.PORT || 5002;
 
 app.listen(PORT, () => {
