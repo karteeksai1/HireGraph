@@ -7,12 +7,20 @@ export default function Interview() {
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState(null);
   const [candidateName, setCandidateName] = useState('Candidate');
+  const [domain, setDomain] = useState('dsa');
   const [topic, setTopic] = useState('Linked Lists');
   const [language, setLanguage] = useState('python');
   const [userCode, setUserCode] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const chatEndRef = useRef(null);
+
+  const domainTopics = {
+    'dsa': ['Linked Lists', 'Arrays'],
+    'system-design': ['Rate Limiting', 'Microservices'],
+    'frontend': ['React Hooks', 'State Management'],
+    'sql': ['Window Functions', 'Query Optimization']
+  };
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('hiregraph_user'));
@@ -23,16 +31,21 @@ export default function Interview() {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    setTopic(domainTopics[domain][0]);
+  }, [domain]);
+
   const startInterview = async () => {
     try {
       const response = await axios.post('http://localhost:5001/api/interview/start', {
         candidateName,
-        topic
+        topic,
+        domain
       });
       setSessionId(response.data.sessionId);
       setChatHistory([{
         sender: 'AI',
-        message: `Welcome ${candidateName}. We will be focusing on ${topic} today. Please write your solution in ${language}.`
+        message: `Welcome ${candidateName}. We will be focusing on ${topic} (${domain}) today. Please write your solution in ${language}.`
       }]);
     } catch (error) {
       console.error("Failed to start interview");
@@ -48,6 +61,7 @@ export default function Interview() {
       const response = await axios.post('http://localhost:5001/api/interview/submit', {
         sessionId,
         topic,
+        domain,
         language,
         userCode
       });
@@ -81,13 +95,23 @@ export default function Interview() {
           {!sessionId ? (
             <div className="flex flex-col gap-3">
               <select 
+                value={domain} 
+                onChange={(e) => setDomain(e.target.value)}
+                className="bg-gray-700 p-2 rounded text-sm text-white focus:outline-none border border-gray-600"
+              >
+                <option value="dsa">Data Structures & Algo</option>
+                <option value="system-design">System Design</option>
+                <option value="frontend">Frontend Engineering</option>
+                <option value="sql">Database & SQL</option>
+              </select>
+              <select 
                 value={topic} 
                 onChange={(e) => setTopic(e.target.value)}
                 className="bg-gray-700 p-2 rounded text-sm text-white focus:outline-none border border-gray-600"
               >
-                <option value="Linked Lists">Linked Lists</option>
-                <option value="Arrays">Arrays</option>
-                <option value="Stacks">Stacks</option>
+                {domainTopics[domain].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
               </select>
               <select 
                 value={language} 
@@ -98,6 +122,7 @@ export default function Interview() {
                 <option value="javascript">JavaScript</option>
                 <option value="java">Java</option>
                 <option value="cpp">C++</option>
+                <option value="sql">SQL</option>
               </select>
               <button 
                 onClick={startInterview}
@@ -108,7 +133,7 @@ export default function Interview() {
             </div>
           ) : (
             <div className="text-sm text-gray-400">
-              Session ID: {sessionId} | Topic: {topic} | Lang: {language}
+              Session ID: {sessionId} | {topic} | Lang: {language}
             </div>
           )}
         </div>
@@ -134,7 +159,7 @@ export default function Interview() {
 
       <div className="w-2/3 flex flex-col">
         <div className="flex justify-between items-center p-2 border-b border-gray-700 bg-gray-900">
-          <span className="text-sm text-gray-400 font-mono ml-4">solution.{language === 'python' ? 'py' : language === 'javascript' ? 'js' : language === 'java' ? 'java' : 'cpp'}</span>
+          <span className="text-sm text-gray-400 font-mono ml-4">solution.{language === 'python' ? 'py' : language === 'javascript' ? 'js' : language === 'java' ? 'java' : language === 'cpp' ? 'cpp' : 'sql'}</span>
           <button 
             onClick={submitCode}
             disabled={!sessionId || isEvaluating}

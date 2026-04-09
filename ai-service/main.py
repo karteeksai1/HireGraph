@@ -38,6 +38,7 @@ class UserInput(BaseModel):
 
 class GradeRequest(BaseModel):
     topic: str
+    domain: str
     language: str
     user_code: str
 
@@ -45,6 +46,7 @@ class GradeRequest(BaseModel):
 async def evaluate_submission(request: GradeRequest):
     initial_state = {
         "topic": request.topic,
+        "domain": request.domain,
         "language": request.language,
         "user_code": request.user_code
     }
