@@ -103,15 +103,26 @@ app.get('/health', async (req, res) => {
 });
 
 app.post('/api/interview/start', async (req, res) => {
-    const { candidateName, topic } = req.body;
+    const { candidateName, topic, domain } = req.body;
     try {
-        const result = await pool.query(
-            'INSERT INTO interview_sessions (candidate_name, topic) VALUES ($1, $2) RETURNING id',
+        const aiResponse = await axios.post('http://127.0.0.1:8000/question', {
+            topic: topic,
+            domain: domain
+        });
+        const questionText = aiResponse.data.question;
+
+        const newSession = await pool.query(
+            'INSERT INTO interview_sessions (user_id, topic, start_time) VALUES ((SELECT id FROM users WHERE name = $1 LIMIT 1), $2, NOW()) RETURNING id',
             [candidateName, topic]
         );
-        res.json({ sessionId: result.rows[0].id });
+        
+        res.json({ 
+            sessionId: newSession.rows[0].id,
+            question: questionText 
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("DATABASE ERROR:", err.message);
+        res.status(500).json({ error: 'Failed to start session' });
     }
 });
 

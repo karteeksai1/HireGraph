@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import google.generativeai as genai
 from dotenv import load_dotenv
 from agent import graph
+from agent import retrieve_question
 
 load_dotenv()
 
@@ -57,6 +58,29 @@ async def evaluate_submission(request: GradeRequest):
         "is_passed": result.get("is_passed", False),
         "feedback": result.get("feedback", "Error generating feedback.")
     }
+
+class QuestionRequest(BaseModel):
+    topic: str
+    domain: str
+
+@app.post("/question")
+async def get_question(request: QuestionRequest):
+    initial_state = {
+        "domain": request.domain,
+        "topic": request.topic,
+        "language": "python",
+        "user_code": "",
+        "question_text": "",
+        "optimal_time": "",
+        "optimal_space": "",
+        "optimal_data_structure": "",
+        "is_passed": False,
+        "feedback": "",
+        "chat_history": []
+    }
+    
+    result = retrieve_question(initial_state)
+    return {"question": result.get("question_text", "Question not found.")}
 
 @app.get("/")
 def read_root():

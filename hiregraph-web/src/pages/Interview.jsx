@@ -35,23 +35,29 @@ export default function Interview() {
     setTopic(domainTopics[domain][0]);
   }, [domain]);
 
-  const startInterview = async () => {
+ const startInterview = async () => {
     try {
       const response = await axios.post('http://localhost:5001/api/interview/start', {
         candidateName,
         topic,
         domain
       });
+      
       setSessionId(response.data.sessionId);
-      setChatHistory([{
-        sender: 'AI',
-        message: `Welcome ${candidateName}. We will be focusing on ${topic} (${domain}) today. Please write your solution in ${language}.`
-      }]);
+      setChatHistory([
+        {
+          sender: 'AI',
+          message: `Welcome ${candidateName}. We will be focusing on ${topic} (${domain}) today. Please write your solution in ${language}.`
+        },
+        {
+          sender: 'AI',
+          message: `Here is your question:\n\n${response.data.question}`
+        }
+      ]);
     } catch (error) {
       console.error("Failed to start interview");
     }
   };
-
   const submitCode = async () => {
     if (!sessionId) return;
     setIsEvaluating(true);

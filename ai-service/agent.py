@@ -1,16 +1,19 @@
 import os
 import json
+import time
 from typing import TypedDict, List
 from dotenv import load_dotenv
 from google import genai
 from pinecone import Pinecone
 from langgraph.graph import StateGraph, END
+from groq import Groq
 
 load_dotenv()
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("hiregraph-dsa-v2")
+groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 class InterviewState(TypedDict):
     domain: str
@@ -84,27 +87,26 @@ def grade_submission(state: InterviewState):
     """
     
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt
+        response = groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model="llama-3.3-70b-versatile",
+            response_format={"type": "json_object"}
         )
-    except Exception as e:
-        return {"is_passed": False, "feedback": "The AI is currently experiencing high traffic. Please wait a moment and click Submit again."}
-    
-    raw_text = response.text.strip()
-    if raw_text.startswith("```json"):
-        raw_text = raw_text[7:-3].strip()
-    elif raw_text.startswith("```"):
-        raw_text = raw_text[3:-3].strip()
-        
-    try:
+        raw_text = response.choices[0].message.content
         result = json.loads(raw_text)
         return {
             "is_passed": result.get("is_passed", False),
             "feedback": result.get("feedback", "Error parsing feedback.")
         }
-    except:
-        return {"is_passed": False, "feedback": "Failed to parse AI JSON response."}
+    except Exception as e:
+        print(f"\n--- GROQ ERROR --- \n{str(e)}\n------------------\n")
+        return {"is_passed": False, "feedback": "System Error: Evaluation failed. Please try again."}
+
 def provide_hint(state: InterviewState):
     return state
 
@@ -125,29 +127,3 @@ workflow.add_conditional_edges("grade", route_evaluation)
 workflow.add_edge("hint", END)
 
 graph = workflow.compile()
-
-if __name__ == "__main__":
-    mock_perfect_code = """
-def hasCycle(head):
-    slow, fast = head, head
-    while fast and fast.next:
-        slow = slow.next
-        fast = fast.next.next
-        if slow == fast:
-            return True
-    return False
-    """
-    
-    initial_state = {
-        "domain": "dsa",
-        "topic": "Linked Lists",
-        "language": "python",
-        "user_code": mock_perfect_code
-    }
-    
-    print("AI is evaluating the submission...")
-    result = graph.invoke(initial_state)
-    
-    print(f"\nQuestion: {result.get('question_text')}")
-    print(f"Passed: {result.get('is_passed')}")
-    print(f"AI Feedback: {result.get('feedback')}\n")
