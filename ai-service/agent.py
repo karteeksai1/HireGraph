@@ -83,10 +83,13 @@ def grade_submission(state: InterviewState):
     "feedback": A short, professional explanation of why it passed or failed. If it failed, give a hint.
     """
     
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=prompt
-    )
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+    except Exception as e:
+        return {"is_passed": False, "feedback": "The AI is currently experiencing high traffic. Please wait a moment and click Submit again."}
     
     raw_text = response.text.strip()
     if raw_text.startswith("```json"):
@@ -102,7 +105,6 @@ def grade_submission(state: InterviewState):
         }
     except:
         return {"is_passed": False, "feedback": "Failed to parse AI JSON response."}
-
 def provide_hint(state: InterviewState):
     return state
 
@@ -120,7 +122,7 @@ workflow.add_node("hint", provide_hint)
 workflow.set_entry_point("retrieve")
 workflow.add_edge("retrieve", "grade")
 workflow.add_conditional_edges("grade", route_evaluation)
-workflow.add_edge("hint", "grade")
+workflow.add_edge("hint", END)
 
 graph = workflow.compile()
 
