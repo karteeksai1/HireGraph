@@ -35,7 +35,7 @@ export default function Interview() {
     setTopic(domainTopics[domain][0]);
   }, [domain]);
 
- const startInterview = async () => {
+  const startInterview = async () => {
     try {
       const response = await axios.post('http://localhost:5001/api/interview/start', {
         candidateName,
@@ -58,6 +58,7 @@ export default function Interview() {
       console.error("Failed to start interview");
     }
   };
+
   const submitCode = async () => {
     if (!sessionId) return;
     setIsEvaluating(true);
@@ -81,6 +82,18 @@ export default function Interview() {
       setChatHistory(prev => [...prev, { sender: 'AI', message: "System Error: Could not evaluate code." }]);
     } finally {
       setIsEvaluating(false);
+    }
+  };
+
+  const finishInterview = async () => {
+    if (!sessionId) return;
+    try {
+      await axios.post('http://localhost:5001/api/interview/finish', { sessionId });
+      navigate('/dashboard');
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || error.message;
+      console.error("Full Backend Error:", error);
+      alert(`Backend Error: ${errorMsg}\n\nCheck your Node.js terminal for the exact database crash!`);
     }
   };
 
@@ -166,6 +179,14 @@ export default function Interview() {
       <div className="w-2/3 flex flex-col">
         <div className="flex justify-between items-center p-2 border-b border-gray-700 bg-gray-900">
           <span className="text-sm text-gray-400 font-mono ml-4">solution.{language === 'python' ? 'py' : language === 'javascript' ? 'js' : language === 'java' ? 'java' : language === 'cpp' ? 'cpp' : 'sql'}</span>
+          <div className="flex gap-4 mr-2">
+            <button 
+              onClick={finishInterview}
+              disabled={!sessionId}
+              className={`px-4 py-2 rounded font-bold transition-colors ${!sessionId ? 'hidden' : 'bg-red-600 hover:bg-red-500'}`}
+            >
+              Finish Interview
+            </button>
           <button 
             onClick={submitCode}
             disabled={!sessionId || isEvaluating}
@@ -173,6 +194,7 @@ export default function Interview() {
           >
             Submit Code
           </button>
+          </div>
         </div>
         <div className="flex-1">
           <Editor
