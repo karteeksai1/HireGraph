@@ -141,16 +141,54 @@ app.post('/api/interview/submit', async (req, res) => {
             user_code: userCode
         });
 
-        const { is_passed, feedback } = aiResponse.data;
+        const { is_passed, score, metrics, feedback } = aiResponse.data;
 
         await pool.query(
-            'INSERT INTO interview_messages (session_id, sender_type, message_content, is_passed) VALUES ($1, $2, $3, $4)',
-            [sessionId, 'AI', feedback, is_passed]
+            'INSERT INTO interview_messages (session_id, sender_type, message_content, is_passed, score) VALUES ($1, $2, $3, $4, $5)',
+            [sessionId, 'AI', feedback, is_passed, score]
         );
 
-        res.json({ isPassed: is_passed, feedback: feedback });
+        res.json({ isPassed: is_passed, score: score, metrics: metrics, feedback: feedback });
     } catch (err) {
-        res.status(500).json({ error: 'AI Evaluation Failed', details: err.message });
+        console.error("AI ROUTE ERROR:", err.message);
+        res.status(500).json({ error: 'AI Evaluation Failed' });
+    }
+});
+
+app.get('/api/sessions/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const sessions = await pool.query(
+            'SELECT * FROM interview_sessions WHERE user_id = $1 ORDER BY start_time DESC',
+            [userId]
+        );
+        res.json(sessions.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
+});
+
+app.post('/api/interview/finish', async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        
+        const scoreQuery = await pool.query(
+            'SELECT MAX(score) as max_score FROM interview_messages WHERE session_id = $1',
+            [sessionId]
+        );
+        
+        const finalScore = scoreQuery.rows[0].max_score || 0;
+
+        await pool.query(
+            "UPDATE interview_sessions SET status = 'completed', final_score = $1 WHERE id = $2",
+            [finalScore, sessionId]
+        );
+        
+        res.json({ success: true, finalScore });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to finish session' });
     }
 });
 const PORT = process.env.PORT || 5002;

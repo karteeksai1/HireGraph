@@ -68,6 +68,52 @@ def grade_submission(state: InterviewState):
     language = state.get("language", "python")
     
     if not user_code:
+        return {"is_passed": False, "score": 0, "metrics": {}, "feedback": "No code provided."}
+
+    prompt = f"""
+    You are a strict FAANG interviewer. Evaluate this code.
+    Programming Language: {language.upper()}
+    Question: {state.get('question_text')}
+    Required Time Complexity: {state.get('optimal_time')}
+    Required Space Complexity: {state.get('optimal_space')}
+    Required Data Structure: {state.get('optimal_data_structure')}
+    
+    Candidate Code:
+    {user_code}
+    
+    Respond strictly in JSON format with exactly four keys:
+    "is_passed": true if the code is logically correct and meets requirements, false otherwise.
+    "score": an integer from 0 to 100 representing the overall quality and correctness.
+    "metrics": a nested JSON object with three keys: "time_complexity" (string rating), "space_complexity" (string rating), and "code_quality" (string rating like "Poor", "Good", "Excellent").
+    "feedback": A professional explanation of the score and actionable hints for improvement.
+    """
+    
+    try:
+        response = groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model="llama-3.3-70b-versatile",
+            response_format={"type": "json_object"}
+        )
+        raw_text = response.choices[0].message.content
+        result = json.loads(raw_text)
+        return {
+            "is_passed": result.get("is_passed", False),
+            "score": result.get("score", 0),
+            "metrics": result.get("metrics", {}),
+            "feedback": result.get("feedback", "Error parsing feedback.")
+        }
+    except Exception as e:
+        print(f"\n--- GROQ ERROR --- \n{str(e)}\n------------------\n")
+        return {"is_passed": False, "score": 0, "metrics": {}, "feedback": "System Error: Evaluation failed. Please try again."}
+    user_code = state.get("user_code", "")
+    language = state.get("language", "python")
+    
+    if not user_code:
         return {"is_passed": False, "feedback": "No code provided."}
 
     prompt = f"""

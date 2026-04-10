@@ -102,6 +102,21 @@ async def ask_ai(user_input: UserInput):
 async def evaluate_submission(request: GradeRequest):
     initial_state = {
         "topic": request.topic,
+        "domain": request.domain,
+        "language": request.language,
+        "user_code": request.user_code
+    }
+    
+    result = graph.invoke(initial_state)
+    
+    return {
+        "is_passed": result.get("is_passed", False),
+        "score": result.get("score", 0),
+        "metrics": result.get("metrics", {}),
+        "feedback": result.get("feedback", "Error generating feedback.")
+    }
+    initial_state = {
+        "topic": request.topic,
         "user_code": request.user_code
     }
     
