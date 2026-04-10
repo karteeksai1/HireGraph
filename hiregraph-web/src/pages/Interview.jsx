@@ -8,6 +8,7 @@ export default function Interview() {
   const [sessionId, setSessionId] = useState(null);
   const [candidateName, setCandidateName] = useState('Candidate');
   const [domain, setDomain] = useState('dsa');
+  const [userId, setUserId] = useState(null);
   const [topic, setTopic] = useState('Linked Lists');
   const [language, setLanguage] = useState('python');
   const [userCode, setUserCode] = useState('');
@@ -26,6 +27,7 @@ export default function Interview() {
     const user = JSON.parse(localStorage.getItem('hiregraph_user'));
     if (user && user.name) {
       setCandidateName(user.name);
+      setUserId(user.id);
     } else {
       navigate('/login');
     }
@@ -40,7 +42,8 @@ export default function Interview() {
       const response = await axios.post('http://localhost:5001/api/interview/start', {
         candidateName,
         topic,
-        domain
+        domain,
+        userId
       });
       
       setSessionId(response.data.sessionId);

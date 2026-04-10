@@ -103,7 +103,8 @@ app.get('/health', async (req, res) => {
 });
 
 app.post('/api/interview/start', async (req, res) => {
-    const { candidateName, topic, domain } = req.body;
+    // 1. We now extract userId directly from the request body
+    const { userId, candidateName, topic, domain } = req.body;
     try {
         const aiResponse = await axios.post('http://127.0.0.1:8000/question', {
             topic: topic,
@@ -111,9 +112,10 @@ app.post('/api/interview/start', async (req, res) => {
         });
         const questionText = aiResponse.data.question;
 
+        // 2. We use $1 for userId instead of the old SELECT subquery
         const newSession = await pool.query(
-            'INSERT INTO interview_sessions (user_id, topic, start_time) VALUES ((SELECT id FROM users WHERE name = $1 LIMIT 1), $2, NOW()) RETURNING id',
-            [candidateName, topic]
+            'INSERT INTO interview_sessions (user_id, topic, start_time) VALUES ($1, $2, NOW()) RETURNING id',
+            [userId, topic]
         );
         
         res.json({ 
@@ -121,7 +123,7 @@ app.post('/api/interview/start', async (req, res) => {
             question: questionText 
         });
     } catch (err) {
-        console.error("DATABASE ERROR:", err.message);
+        console.error("START ERROR:", err.message);
         res.status(500).json({ error: 'Failed to start session' });
     }
 });
@@ -143,9 +145,12 @@ app.post('/api/interview/submit', async (req, res) => {
 
         const { is_passed, score, metrics, feedback } = aiResponse.data;
 
+        // NEW: Package the feedback and metrics together so nothing is lost!
+        const dbContent = JSON.stringify({ feedback, metrics });
+
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content, is_passed, score) VALUES ($1, $2, $3, $4, $5)',
-            [sessionId, 'AI', feedback, is_passed, score]
+            [sessionId, 'AI', dbContent, is_passed, score]
         );
 
         res.json({ isPassed: is_passed, score: score, metrics: metrics, feedback: feedback });
@@ -154,7 +159,6 @@ app.post('/api/interview/submit', async (req, res) => {
         res.status(500).json({ error: 'AI Evaluation Failed' });
     }
 });
-
 app.get('/api/sessions/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
@@ -189,6 +193,31 @@ app.post('/api/interview/finish', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to finish session' });
+    }
+});
+
+app.get('/api/sessions/details/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const sessionQuery = await pool.query(
+            'SELECT * FROM interview_sessions WHERE id = $1', 
+            [sessionId]
+        );
+        const messagesQuery = await pool.query(
+            'SELECT * FROM interview_messages WHERE session_id = $1 ORDER BY id ASC', 
+            [sessionId]
+        );
+        
+        if (sessionQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        res.json({
+            session: sessionQuery.rows[0],
+            messages: messagesQuery.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch details' });
     }
 });
 const PORT = process.env.PORT || 5002;

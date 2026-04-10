@@ -3,7 +3,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Interview from './pages/Interview';
-
+import Scorecard from './pages/Scorecard';
 function App() {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -15,6 +15,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/interview" element={<Interview />} />
+          <Route path="/scorecard/:sessionId" element={<Scorecard />} />
         </Routes>
       </BrowserRouter>
     </GoogleOAuthProvider>

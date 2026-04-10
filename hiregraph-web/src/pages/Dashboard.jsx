@@ -48,10 +48,20 @@ export default function Dashboard() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sessions.map((session) => (
-            <div key={session.id} className="bg-[#1e293b] p-6 rounded-lg border border-gray-700 flex flex-col justify-between">
+            <div
+              key={session.id}
+              onClick={() => navigate(`/scorecard/${session.id}`)}
+              className="bg-[#1e293b] p-6 rounded-lg border border-gray-700 flex flex-col justify-between cursor-pointer hover:border-blue-500 transition-colors"
+            >
               <h3 className="text-xl font-bold text-blue-400 mb-4">{session.topic}</h3>
               <div className="flex justify-between items-center text-sm text-gray-400">
-                <span>{new Date(session.start_time).toLocaleDateString()}</span>
+                <span>
+                  {new Date(session.start_time).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </span>
                 {session.status === 'completed' ? (
                   <span className={`font-bold ${session.final_score >= 70 ? 'text-green-400' : 'text-red-400'}`}>
                     Score: {session.final_score}/100
