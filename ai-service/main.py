@@ -109,6 +109,23 @@ async def evaluate_submission(request: GradeRequest):
     
     result = graph.invoke(initial_state)
     
+    # NEW: We are now explicitly forwarding the score and metrics to Node.js!
+    return {
+        "is_passed": result.get("is_passed", False),
+        "score": result.get("score", 0),
+        "metrics": result.get("metrics", {}),
+        "feedback": result.get("feedback", "Error generating feedback.")
+    }
+async def evaluate_submission(request: GradeRequest):
+    initial_state = {
+        "topic": request.topic,
+        "domain": request.domain,
+        "language": request.language,
+        "user_code": request.user_code
+    }
+    
+    result = graph.invoke(initial_state)
+    
     return {
         "is_passed": result.get("is_passed", False),
         "score": result.get("score", 0),
