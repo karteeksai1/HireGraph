@@ -42,22 +42,7 @@ class GradeRequest(BaseModel):
     domain: str
     language: str
     user_code: str
-
-@app.post("/grade")
-async def evaluate_submission(request: GradeRequest):
-    initial_state = {
-        "topic": request.topic,
-        "domain": request.domain,
-        "language": request.language,
-        "user_code": request.user_code
-    }
-    
-    result = graph.invoke(initial_state)
-    
-    return {
-        "is_passed": result.get("is_passed", False),
-        "feedback": result.get("feedback", "Error generating feedback.")
-    }
+    chat_history: list = []
 
 class QuestionRequest(BaseModel):
     topic: str
@@ -104,24 +89,8 @@ async def evaluate_submission(request: GradeRequest):
         "topic": request.topic,
         "domain": request.domain,
         "language": request.language,
-        "user_code": request.user_code
-    }
-    
-    result = graph.invoke(initial_state)
-    
-    # NEW: We are now explicitly forwarding the score and metrics to Node.js!
-    return {
-        "is_passed": result.get("is_passed", False),
-        "score": result.get("score", 0),
-        "metrics": result.get("metrics", {}),
-        "feedback": result.get("feedback", "Error generating feedback.")
-    }
-async def evaluate_submission(request: GradeRequest):
-    initial_state = {
-        "topic": request.topic,
-        "domain": request.domain,
-        "language": request.language,
-        "user_code": request.user_code
+        "user_code": request.user_code,
+        "chat_history": request.chat_history
     }
     
     result = graph.invoke(initial_state)
@@ -130,16 +99,5 @@ async def evaluate_submission(request: GradeRequest):
         "is_passed": result.get("is_passed", False),
         "score": result.get("score", 0),
         "metrics": result.get("metrics", {}),
-        "feedback": result.get("feedback", "Error generating feedback.")
-    }
-    initial_state = {
-        "topic": request.topic,
-        "user_code": request.user_code
-    }
-    
-    result = graph.invoke(initial_state)
-    
-    return {
-        "is_passed": result.get("is_passed", False),
         "feedback": result.get("feedback", "Error generating feedback.")
     }

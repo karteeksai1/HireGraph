@@ -25,6 +25,8 @@ class InterviewState(TypedDict):
     optimal_data_structure: str
     user_code: str
     is_passed: bool
+    score: int         
+    metrics: dict       
     feedback: str
     chat_history: List[dict]
 
@@ -64,6 +66,56 @@ def retrieve_question(state: InterviewState):
     }
 
 def grade_submission(state: InterviewState):
+    user_code = state.get("user_code", "")
+    language = state.get("language", "python")
+    history_array = state.get("chat_history", [])
+    
+    # Format the last 4 interactions so the AI doesn't get overwhelmed
+    history_text = "\n".join(history_array[-4:]) if history_array else "No previous history."
+    
+    if not user_code:
+        return {"is_passed": False, "score": 0, "metrics": {}, "feedback": "No code provided."}
+
+    prompt = f"""
+    You are a strict but supportive FAANG interviewer. Evaluate this code.
+    Programming Language: {language.upper()}
+    Question: {state.get('question_text')}
+    Target Time Complexity: {state.get('optimal_time')}
+    Target Space Complexity: {state.get('optimal_space')}
+    Target Data Structure: {state.get('optimal_data_structure')}
+    
+    Previous Conversation Context:
+    {history_text}
+    
+    Candidate's Latest Code:
+    {user_code}
+    
+    EVALUATION RULES:
+    1. If the code is fully optimal and meets all target complexities: Set "is_passed" to true, score 85-100, and congratulate them.
+    2. If the code works but is brute-force (suboptimal time/space): Set "is_passed" to false, score 50-80, and ask them a follow-up question to optimize it. Do NOT give them the exact answer.
+    3. If the code is broken/fails edge cases: Set "is_passed" to false, score 0-49, and give a specific hint about where it fails.
+    
+    Respond strictly in JSON format with exactly four keys:
+    "is_passed" (boolean), "score" (integer 0-100), "metrics" (JSON object with keys: "time_complexity", "space_complexity", "code_quality"), and "feedback" (string).
+    """
+    
+    try:
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile",
+            response_format={"type": "json_object"}
+        )
+        raw_text = response.choices[0].message.content
+        result = json.loads(raw_text)
+        return {
+            "is_passed": result.get("is_passed", False),
+            "score": result.get("score", 0),
+            "metrics": result.get("metrics", {}),
+            "feedback": result.get("feedback", "Error parsing feedback.")
+        }
+    except Exception as e:
+        print(f"\n--- GROQ ERROR --- \n{str(e)}\n------------------\n")
+        return {"is_passed": False, "score": 0, "metrics": {}, "feedback": "System Error: Evaluation failed. Please try again."}
     user_code = state.get("user_code", "")
     language = state.get("language", "python")
     

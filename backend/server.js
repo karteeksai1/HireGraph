@@ -131,21 +131,39 @@ app.post('/api/interview/start', async (req, res) => {
 app.post('/api/interview/submit', async (req, res) => {
     const { sessionId, topic, domain, language, userCode } = req.body;
     try {
+        // 1. Save the user's latest code first
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, submitted_code) VALUES ($1, $2, $3)',
             [sessionId, 'USER', userCode]
         );
 
+        // 2. Fetch the chat history for this specific session
+        const historyQuery = await pool.query(
+            'SELECT sender_type, submitted_code, message_content FROM interview_messages WHERE session_id = $1 ORDER BY id ASC',
+            [sessionId]
+        );
+        
+        // 3. Clean up the history into a simple array of strings for the AI
+        const chatHistory = historyQuery.rows.map(row => {
+            if (row.sender_type === 'USER') return `Candidate: ${row.submitted_code}`;
+            try {
+                const parsed = JSON.parse(row.message_content);
+                return `Interviewer: ${parsed.feedback}`;
+            } catch(e) {
+                return `Interviewer: ${row.message_content}`;
+            }
+        });
+
+        // 4. Send the new code AND the history to Python
         const aiResponse = await axios.post('http://127.0.0.1:8000/grade', {
             topic: topic,
             domain: domain,
             language: language,
-            user_code: userCode
+            user_code: userCode,
+            chat_history: chatHistory
         });
 
         const { is_passed, score, metrics, feedback } = aiResponse.data;
-
-        // NEW: Package the feedback and metrics together so nothing is lost!
         const dbContent = JSON.stringify({ feedback, metrics });
 
         await pool.query(
