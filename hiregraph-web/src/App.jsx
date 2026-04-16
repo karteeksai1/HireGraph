@@ -4,6 +4,9 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Interview from './pages/Interview';
 import Scorecard from './pages/Scorecard';
+import PastInterviews from './pages/PastInterviews';
+import InterviewSetup from './pages/InterviewSetup';
+
 function App() {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -16,6 +19,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/interview" element={<Interview />} />
           <Route path="/scorecard/:sessionId" element={<Scorecard />} />
+          <Route path="/past-interviews" element={<PastInterviews />} />
+          <Route path="/setup" element={<InterviewSetup />} />
         </Routes>
       </BrowserRouter>
     </GoogleOAuthProvider>

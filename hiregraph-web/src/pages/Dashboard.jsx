@@ -1,80 +1,72 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import Constellation from '../components/Constellation';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('');
-  const [userId, setUserId] = useState(null);
-  const [sessions, setSessions] = useState([]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('hiregraph_user'));
     if (user && user.name) {
       setUserName(user.name);
-      setUserId(user.id);
     } else {
       navigate('/login');
     }
   }, [navigate]);
 
-  useEffect(() => {
-    const fetchSessions = async () => {
-      if (!userId) return;
-      try {
-        const response = await axios.get(`http://localhost:5001/api/sessions/${userId}`);
-        setSessions(response.data);
-      } catch (error) {
-        console.error("Failed to load sessions");
-      }
-    };
-    fetchSessions();
-  }, [userId]);
-
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white p-8 font-sans">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-12 border-b border-gray-800 pb-6">
-          <h1 className="text-3xl font-bold">Welcome back, {userName}</h1>
-          <button 
-            onClick={() => navigate('/interview')}
-            className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded font-bold transition-colors"
+    <div className="min-h-screen text-white font-sans flex flex-col relative overflow-hidden">
+      <Constellation />
+
+      <div className="relative z-10 flex-1 flex flex-col">
+        <div className="border-b border-white/10 px-8 py-5 flex justify-between items-center max-w-5xl mx-auto w-full backdrop-blur-sm">
+          <h1 className="text-2xl font-bold text-blue-400 tracking-tight">HireGraph AI</h1>
+          <button
+            onClick={() => {
+              localStorage.removeItem('hiregraph_user');
+              navigate('/login');
+            }}
+            className="text-sm text-blue-200/50 hover:text-white transition-colors"
           >
-            + Start New Interview
+            Log Out
           </button>
         </div>
 
-        <h2 className="text-xl text-gray-400 mb-6">Past Sessions</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {sessions.map((session) => (
+        <div className="max-w-5xl mx-auto px-8 pt-24 pb-16 flex flex-col items-center text-center">
+          <p className="text-indigo-300 text-lg mb-2 font-medium tracking-wide">Welcome back,</p>
+          <h2 className="text-6xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 drop-shadow-sm">
+            {userName}
+          </h2>
+          <p className="text-indigo-200/70 text-lg mb-16 max-w-2xl leading-relaxed font-light tracking-wide">
+            Engage in dynamic, multi-turn technical interviews driven by advanced AI. Calibrate your domain parameters, write optimal code, and receive deep architectural feedback.
+          </p>
+        </div>
+
+        <div className="max-w-5xl mx-auto px-8 w-full pb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div
-              key={session.id}
-              onClick={() => navigate(`/scorecard/${session.id}`)}
-              className="bg-[#1e293b] p-6 rounded-lg border border-gray-700 flex flex-col justify-between cursor-pointer hover:border-blue-500 transition-colors"
+              onClick={() => navigate('/past-interviews')}
+              className="bg-[#1e293b]/60 backdrop-blur-md p-8 rounded-2xl border border-blue-900/30 hover:border-blue-500/50 cursor-pointer transition-all duration-300 group hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] hover:-translate-y-1"
             >
-              <h3 className="text-xl font-bold text-blue-400 mb-4">{session.topic}</h3>
-              <div className="flex justify-between items-center text-sm text-gray-400">
-                <span>
-                  {new Date(session.start_time).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
-                {session.status === 'completed' ? (
-                  <span className={`font-bold ${session.final_score >= 70 ? 'text-green-400' : 'text-red-400'}`}>
-                    Score: {session.final_score}/100
-                  </span>
-                ) : (
-                  <span className="text-yellow-400 font-bold">In Progress</span>
-                )}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-blue-100 group-hover:text-blue-400 transition-colors">Past Interviews</h3>
+                <span className="text-indigo-500 group-hover:text-blue-400 group-hover:translate-x-2 transition-all duration-300">→</span>
               </div>
+              <p className="text-indigo-200/60 text-sm leading-relaxed">Review your previous sessions, analyze your scores, and study the AI's complex technical feedback.</p>
             </div>
-          ))}
-          {sessions.length === 0 && (
-            <div className="text-gray-500">No past sessions found. Start an interview!</div>
-          )}
+
+            <div
+              onClick={() => navigate('/setup')}
+              className="bg-[#1e293b]/60 backdrop-blur-md p-8 rounded-2xl border border-purple-900/30 hover:border-purple-500/50 cursor-pointer transition-all duration-300 group hover:shadow-[0_0_30px_rgba(168,85,247,0.15)] hover:-translate-y-1"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-blue-100 group-hover:text-purple-400 transition-colors">Start New Session</h3>
+                <span className="text-indigo-500 group-hover:text-purple-400 group-hover:translate-x-2 transition-all duration-300">→</span>
+              </div>
+              <p className="text-indigo-200/60 text-sm leading-relaxed">Choose an engineering domain and specific technical topic to launch a fresh, interactive interview environment.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
