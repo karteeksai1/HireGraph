@@ -18,7 +18,7 @@ export default function Login() {
     e.preventDefault();
     try {
       const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/login';
-      const response = await axios.post(`http://localhost:5001${endpoint}`, formData);
+      const response = await axios.post(`http://localhost:5002${endpoint}`, formData);
       
       localStorage.setItem('hiregraph_user', JSON.stringify(response.data.user));
       navigate('/dashboard');
@@ -29,7 +29,7 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await axios.post('http://localhost:5001/api/auth/google', {
+      const response = await axios.post('http://localhost:5002/api/auth/google', {
         credential: credentialResponse.credential
       });
       

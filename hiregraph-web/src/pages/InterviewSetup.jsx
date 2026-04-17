@@ -39,7 +39,7 @@ export default function InterviewSetup() {
     setIsStarting(true);
     
     try {
-      const response = await axios.post('http://localhost:5001/api/interview/start', {
+      const response = await axios.post('http://localhost:5002/api/interview/start', {
         userId,
         candidateName,
         topic,

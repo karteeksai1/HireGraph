@@ -49,7 +49,7 @@ export default function Interview() {
     }]);
 
     try {
-      const response = await axios.post('http://localhost:5001/api/interview/submit', {
+      const response = await axios.post('http://localhost:5002/api/interview/submit', {
         sessionId,
         topic,
         domain,
@@ -73,7 +73,7 @@ export default function Interview() {
   const finishInterview = async () => {
     if (!sessionId) return;
     try {
-      await axios.post('http://localhost:5001/api/interview/finish', { sessionId });
+      await axios.post('http://localhost:5002/api/interview/finish', { sessionId });
       navigate('/dashboard');
     } catch (error) {
       const errorMsg = error.response?.data?.error || error.message;
@@ -87,8 +87,8 @@ export default function Interview() {
   }, [chatHistory]);
 
   return (
-    <div className="flex h-screen bg-[#0f172a] text-white font-sans flex flex-col relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-[#0f172a] to-[#0f172a] z-0"></div>
+    <div className="flex h-screen bg-[#0f172a] text-white font-sans  flex-col relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-indigo-900/20 via-[#0f172a] to-[#0f172a] z-0"></div>
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50 z-0"></div>
       
       <div className="relative z-10 flex-1 flex h-full">
@@ -148,7 +148,7 @@ export default function Interview() {
             <button 
               onClick={submitCode}
               disabled={!sessionId || isEvaluating}
-              className={`px-7 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 border ${!sessionId || isEvaluating ? 'bg-gray-800 text-gray-500 cursor-not-allowed border-gray-700' : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:scale-[1.01] border-indigo-400/40'}`}
+              className={`px-7 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 border ${!sessionId || isEvaluating ? 'bg-gray-800 text-gray-500 cursor-not-allowed border-gray-700' : 'bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:scale-[1.01] border-indigo-400/40'}`}
             >
               Submit Code
             </button>
