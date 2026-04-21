@@ -35,7 +35,7 @@ export default function InterviewSetup() {
     setIsStarting(true);
     
     try {
-      const response = await axios.post('${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/start', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/start`, {
         userId,
         candidateName,
         domain,

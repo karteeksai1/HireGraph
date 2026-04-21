@@ -68,7 +68,7 @@ export default function Interview() {
     setChatHistory(prev => [...prev, { sender: 'USER', message: userMsg }]);
 
     try {
-      const response = await axios.post('${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/chat', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/chat`, {
         sessionId,
         domain,
         message: userMsg,
@@ -91,7 +91,7 @@ export default function Interview() {
     setTestResults(null);
     
     try {
-      const response = await axios.post('${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/run', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/run`, {
         code: userCode,
         language,
         testCases
@@ -115,7 +115,7 @@ export default function Interview() {
     }]);
 
     try {
-      const response = await axios.post('${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/submit', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/submit`, {
         sessionId,
         topic,
         domain,
@@ -141,7 +141,7 @@ export default function Interview() {
       setIsFetchingNext(true);
 
       try {
-          const response = await axios.post('${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/next', {
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/next`, {
               sessionId,
               domain,
               difficulty,
@@ -171,7 +171,7 @@ export default function Interview() {
   const finishInterview = async () => {
     if (!sessionId) return;
     try {
-      await axios.post('${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/finish', { sessionId });
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/finish`, { sessionId });
       navigate(`/scorecard/${sessionId}`);
     } catch (error) {
       alert("Failed to close session.");
