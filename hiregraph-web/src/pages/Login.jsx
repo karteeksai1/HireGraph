@@ -29,7 +29,7 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await axios.post('${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/auth/google', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/auth/google`, {
         credential: credentialResponse.credential
       });
       
