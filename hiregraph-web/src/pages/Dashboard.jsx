@@ -39,7 +39,7 @@ export default function Dashboard() {
             {userName}
           </h2>
           <p className="text-indigo-200/70 text-lg mb-16 max-w-2xl leading-relaxed font-light tracking-wide">
-            Engage in dynamic, multi-turn technical interviews driven by advanced AI. Calibrate your domain parameters, write optimal code, and receive deep architectural feedback.
+            Run mock technical interviews with AI. Choose your domain, write code in real time, and get detailed feedback on your solutions and design choices.
           </p>
         </div>
 

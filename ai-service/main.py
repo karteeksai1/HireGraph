@@ -1,41 +1,13 @@
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel
-import google.generativeai as genai
 from dotenv import load_dotenv
-from agent import graph
-from agent import retrieve_question
 
 load_dotenv()
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-
-personas = {
-    "dsa": """
-        You are a strict, senior FAANG software engineer conducting a technical coding interview.
-        Do not give away the direct answer. 
-        If their solution is suboptimal, point out the time or space complexity inefficiency.
-        If they are stuck, provide a small hint about which data structure to use.
-    """,
-    "frontend": """
-        You are a Lead Frontend Engineer conducting a React and Node.js interview.
-        Do not give away the direct answer.
-        Challenge the candidate on component re-rendering, hook dependencies, state management, and API integration.
-        Ensure their code follows modern ES6+ and React best practices.
-    """,
-    "behavioral": """
-        You are a strict but fair Engineering Manager conducting a behavioral interview.
-        Do not let the candidate get away with vague answers.
-        Force them to use the STAR method (Situation, Task, Action, Result).
-        If they don't specify their exact personal contribution to a project, ask them to clarify.
-    """
-}
+from agent import graph, retrieve_question, get_chat_response, dry_run_code
 
 app = FastAPI()
-
-class UserInput(BaseModel):
-    message: str
-    domain: str = "dsa" 
 
 class GradeRequest(BaseModel):
     topic: str
@@ -45,43 +17,25 @@ class GradeRequest(BaseModel):
     chat_history: list = []
 
 class QuestionRequest(BaseModel):
-    topic: str
     domain: str
+    difficulty: str = "medium"
+    previous_topic: str = ""
+
+class ChatRequest(BaseModel):
+    domain: str
+    message: str
+    chat_history: list = []
+    question: str
+
+class RunRequest(BaseModel):
+    code: str
+    language: str
+    test_cases: list
 
 @app.post("/question")
 async def get_question(request: QuestionRequest):
-    initial_state = {
-        "domain": request.domain,
-        "topic": request.topic,
-        "language": "python",
-        "user_code": "",
-        "question_text": "",
-        "optimal_time": "",
-        "optimal_space": "",
-        "optimal_data_structure": "",
-        "is_passed": False,
-        "feedback": "",
-        "chat_history": []
-    }
-    
-    result = retrieve_question(initial_state)
-    return {"question": result.get("question_text", "Question not found.")}
-
-@app.get("/")
-def read_root():
-    return {"status": "HireGraph AI Service is running"}
-
-@app.post("/ask")
-async def ask_ai(user_input: UserInput):
-    system_prompt = personas.get(user_input.domain, personas["dsa"])
-    
-    dynamic_model = genai.GenerativeModel(
-        model_name='gemini-2.5-flash',
-        system_instruction=system_prompt
-    )
-    
-    response = dynamic_model.generate_content(user_input.message)
-    return {"reply": response.text}
+    result = retrieve_question({"domain": request.domain, "difficulty": request.difficulty, "previous_topic": request.previous_topic})
+    return result
 
 @app.post("/grade")
 async def evaluate_submission(request: GradeRequest):
@@ -90,14 +44,23 @@ async def evaluate_submission(request: GradeRequest):
         "domain": request.domain,
         "language": request.language,
         "user_code": request.user_code,
-        "chat_history": request.chat_history
+        "chat_history": request.chat_history,
+        "question_text": request.topic 
     }
-    
     result = graph.invoke(initial_state)
-    
     return {
         "is_passed": result.get("is_passed", False),
         "score": result.get("score", 0),
         "metrics": result.get("metrics", {}),
-        "feedback": result.get("feedback", "Error generating feedback.")
+        "feedback": result.get("feedback", "")
     }
+
+@app.post("/chat")
+async def handle_chat(request: ChatRequest):
+    reply = get_chat_response(request.domain, request.chat_history, request.message, request.question)
+    return {"reply": reply}
+
+@app.post("/run")
+async def handle_run(request: RunRequest):
+    result = dry_run_code(request.code, request.language, request.test_cases)
+    return result

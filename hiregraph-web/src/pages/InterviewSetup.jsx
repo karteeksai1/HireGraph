@@ -8,16 +8,17 @@ export default function InterviewSetup() {
   const [candidateName, setCandidateName] = useState('Candidate');
   const [userId, setUserId] = useState(null);
   const [domain, setDomain] = useState('');
-  const [topic, setTopic] = useState('');
-  const [language, setLanguage] = useState('python');
+  const [difficulty, setDifficulty] = useState('');
   const [isStarting, setIsStarting] = useState(false);
 
-  const domainTopics = {
-    'dsa': { label: 'Data Structures & Algo', topics: ['Linked Lists', 'Arrays'] },
-    'system-design': { label: 'System Design', topics: ['Rate Limiting', 'Microservices'] },
-    'frontend': { label: 'Frontend Engineering', topics: ['React Hooks', 'State Management'] },
-    'sql': { label: 'Database & SQL', topics: ['Window Functions', 'Query Optimization'] }
+  const domains = {
+    'dsa': 'Data Structures & Algorithms',
+    'system-design': 'System Design',
+    'frontend': 'Frontend Engineering',
+    'sql': 'Database & SQL'
   };
+  
+  const difficulties = ['easy', 'medium', 'hard'];
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('hiregraph_user'));
@@ -29,30 +30,27 @@ export default function InterviewSetup() {
     }
   }, [navigate]);
 
-  const handleDomainSelect = (selectedDomain) => {
-    setDomain(selectedDomain);
-    setTopic('');
-  };
-
   const startInterview = async () => {
-    if (!domain || !topic || !language || !userId) return;
+    if (!domain || !difficulty || !userId) return;
     setIsStarting(true);
     
     try {
       const response = await axios.post('http://localhost:5002/api/interview/start', {
         userId,
         candidateName,
-        topic,
-        domain
+        domain,
+        difficulty
       });
       
       navigate('/interview', {
         state: {
           sessionId: response.data.sessionId,
           question: response.data.question,
+          topic: response.data.topic,
+          testCases: response.data.testCases,
+          boilerplates: response.data.boilerplates,
           domain,
-          topic,
-          language,
+          difficulty,
           candidateName
         }
       });
@@ -63,90 +61,70 @@ export default function InterviewSetup() {
   };
 
   return (
-    <div className=" <Constellation />min-h-screen bg-[#0f172a] text-white font-sans flex flex-col relative overflow-hidden">
-      <Constellation/>
-      <div className="absolute inset-0 bg-linear-to-b from-indigo-900/20 via-[#0f172a] to-[#0f172a] z-0"></div>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50 z-0"></div>
+    <div className="min-h-screen bg-[#030000] text-white font-sans flex flex-col relative overflow-hidden">
+      <div className="absolute bottom-[-30%] left-1/2 -translate-x-1/2 w-[150%] h-[80%] bg-red-950/80 blur-[120px] rounded-[100%] pointer-events-none z-0"></div>
+      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-orange-500/80 to-transparent pointer-events-none shadow-[0_0_20px_rgba(249,115,22,1)] z-0"></div>
+
+      <Constellation />
       
       <div className="relative z-10 flex-1 flex flex-col max-w-5xl mx-auto w-full p-8">
-        <header className="flex justify-between items-center mb-16 border-b border-gray-800/50 pb-6">
-          <div className="flex items-center gap-6">
-             <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-white transition-colors">
-              ← Back to Dashboard
-            </button>
-            <h1 className="text-2xl font-bold text-blue-400 tracking-tight">HireGraph AI</h1>
-          </div>
-          
-          <div className="flex items-center gap-3 bg-[#1e293b]/80 backdrop-blur-md p-2 rounded-lg border border-gray-700/50 shadow-lg">
-            <span className="text-sm text-gray-400 font-medium px-2 uppercase tracking-wider">Language</span>
-            <select 
-              value={language} 
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-gray-800 text-white border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-blue-500 font-mono text-sm cursor-pointer hover:bg-gray-700 transition-colors"
-            >
-              <option value="python">Python</option>
-              <option value="javascript">JavaScript</option>
-              <option value="java">Java</option>
-              <option value="cpp">C++</option>
-              <option value="sql">SQL</option>
-            </select>
-          </div>
+        <header className="flex justify-between items-center mb-12 border-b border-red-900/30 pb-6">
+          <button onClick={() => navigate('/dashboard')} className="text-[10px] tracking-[0.3em] text-red-200/50 hover:text-white transition-colors uppercase">
+            ← Abort
+          </button>
+          <h1 className="text-xs font-light tracking-[0.4em] text-red-200/80 uppercase">HireGraph</h1>
         </header>
 
         <main className="flex-1 flex flex-col max-w-3xl w-full mx-auto">
           <div className="mb-10 text-center">
-            <h2 className="text-4xl font-extrabold mb-4 text-transparent bg-clip-text bg-linear-to-r from-blue-400 via-indigo-400 to-purple-400 drop-shadow-sm">
-              Configure Your Interview
+            <h2 className="text-3xl md:text-4xl font-light mb-4 text-transparent bg-clip-text bg-gradient-to-r from-red-200 via-white to-orange-200 tracking-[0.2em] uppercase">
+              Set Up Your Interview 
             </h2>
-            <p className="text-gray-400 text-lg">Select your engineering domain and specific topic to generate a tailored technical challenge.</p>
+            <p className="text-red-200/50 text-xs tracking-[0.2em] uppercase italic">Choose what you want to practice.</p>
           </div>
 
-          <div className="space-y-8 bg-[#1e293b]/60 backdrop-blur-xl p-8 rounded-2xl border border-gray-700/50 shadow-2xl">
+          <div className="space-y-8 bg-black/40 backdrop-blur-xl p-10 rounded-sm border border-red-900/20 shadow-2xl">
             <div>
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-3 text-gray-200">
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 text-sm border border-blue-500/30">1</span> 
-                Select Domain
+              <h3 className="text-xs font-light mb-6 flex items-center gap-3 text-red-300 uppercase tracking-[0.3em]">
+                <span className="flex items-center justify-center w-6 h-6 border border-red-500/30 text-red-400 text-[10px]">1</span> 
+                Domain Vector
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(domainTopics).map(([key, data]) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(domains).map(([key, label]) => (
                   <button
                     key={key}
-                    onClick={() => handleDomainSelect(key)}
-                    className={`p-5 rounded-xl border text-left transition-all duration-300 ${
+                    onClick={() => setDomain(key)}
+                    className={`p-6 border text-center transition-all duration-500 ${
                       domain === key 
-                        ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.15)] -translate-y-0.5' 
-                        : 'border-gray-700 bg-gray-800/40 hover:border-gray-500 hover:bg-gray-800/80'
+                        ? 'border-orange-500/60 bg-red-900/20 shadow-[0_0_20px_rgba(249,115,22,0.15)]' 
+                        : 'border-red-900/30 bg-black/40 hover:border-red-500/50'
                     }`}
                   >
-                    <div className={`font-bold text-lg ${domain === key ? 'text-blue-400' : 'text-gray-300'}`}>{data.label}</div>
+                    <div className={`font-light text-sm tracking-[0.1em] uppercase ${domain === key ? 'text-white' : 'text-red-200/60'}`}>{label}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className={`transition-all duration-500 ${domain ? 'opacity-100 translate-y-0' : 'opacity-40 pointer-events-none translate-y-2'}`}>
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-3 text-gray-200">
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm border border-purple-500/30">2</span> 
-                Select Topic
+            <div className={`transition-all duration-700 ${domain ? 'opacity-100 translate-y-0' : 'opacity-20 pointer-events-none translate-y-4'}`}>
+              <h3 className="text-xs font-light mb-6 flex items-center gap-3 text-orange-300 uppercase tracking-[0.3em]">
+                <span className="flex items-center justify-center w-6 h-6 border border-orange-500/30 text-orange-400 text-[10px]">2</span> 
+                Difficulty Level
               </h3>
-              <div className="flex flex-wrap gap-3">
-                {domain ? (
-                  domainTopics[domain].topics.map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setTopic(t)}
-                      className={`px-6 py-3 rounded-full border font-medium transition-all duration-300 ${
-                        topic === t
-                          ? 'border-purple-500 bg-purple-500/15 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                          : 'border-gray-700 bg-gray-800/40 text-gray-400 hover:border-gray-500 hover:text-gray-200'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))
-                ) : (
-                  <div className="text-gray-500 text-sm italic px-2">Please select a domain first.</div>
-                )}
+              <div className="flex flex-wrap gap-4">
+                {difficulties.map(diff => (
+                  <button
+                    key={diff}
+                    onClick={() => setDifficulty(diff)}
+                    className={`flex-1 py-4 border text-xs tracking-[0.15em] uppercase transition-all duration-500 ${
+                      difficulty === diff
+                        ? 'border-orange-400 bg-orange-900/20 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]'
+                        : 'border-red-900/30 bg-black/40 text-red-200/50 hover:border-red-500/50 hover:text-red-100'
+                    }`}
+                  >
+                    {diff}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -154,14 +132,14 @@ export default function InterviewSetup() {
           <div className="mt-12 text-center pb-12">
             <button
               onClick={startInterview}
-              disabled={!domain || !topic || isStarting}
-              className={`w-full max-w-md mx-auto py-4 rounded-xl font-bold text-lg transition-all duration-300 tracking-wide ${
-                !domain || !topic 
-                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700' 
-                  : 'bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:scale-[1.02] border border-indigo-400/30'
+              disabled={!domain || !difficulty || isStarting}
+              className={`w-full max-w-md mx-auto py-5 border font-light text-sm uppercase tracking-[0.3em] transition-all duration-700 ${
+                !domain || !difficulty
+                  ? 'bg-black/50 text-red-900/50 cursor-not-allowed border-red-950' 
+                  : 'bg-red-950/40 border-orange-500/50 hover:bg-red-900/60 hover:border-orange-400 text-white shadow-[0_0_30px_rgba(220,38,38,0.3)]'
               }`}
             >
-              {isStarting ? 'Generating Environment...' : 'Begin Interview Session'}
+              {isStarting ? 'Initiating...' : 'START INTERVIEW'}
             </button>
           </div>
         </main>
