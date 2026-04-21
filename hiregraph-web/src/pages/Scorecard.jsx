@@ -12,7 +12,7 @@ export default function Scorecard() {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5002/api/sessions/details/${sessionId}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/sessions/details/${sessionId}`);
         setData(response.data);
       } catch (error) {
         console.error("Failed to load scorecard");

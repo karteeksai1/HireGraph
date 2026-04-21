@@ -23,7 +23,7 @@ export default function PastInterviews() {
           return;
         }
 
-        const response = await axios.get(`http://localhost:5002/api/sessions/${user.id}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/sessions/${user.id}`);
         
         if (Array.isArray(response.data)) {
           setSessions(response.data);

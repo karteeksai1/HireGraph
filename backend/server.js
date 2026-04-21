@@ -5,7 +5,13 @@ const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL || '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
 app.use(express.json());
 
 const pool = new Pool({
@@ -13,10 +19,12 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
+const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
+
 app.post('/api/interview/start', async (req, res) => {
     const { userId, candidateName, domain, difficulty } = req.body;
     try {
-        const aiResponse = await axios.post('http://127.0.0.1:8000/question', { domain, difficulty });
+        const aiResponse = await axios.post(`${AI_URL}/question`, { domain, difficulty });
         const { question_title, question_text, test_cases, boilerplates } = aiResponse.data;
 
         const newSession = await pool.query(
@@ -39,14 +47,14 @@ app.post('/api/interview/start', async (req, res) => {
 app.post('/api/interview/next', async (req, res) => {
     const { sessionId, domain, difficulty, previousTopic } = req.body;
     try {
-        const aiResponse = await axios.post('http://127.0.0.1:8000/question', { 
+        const aiResponse = await axios.post(`${AI_URL}/question`, { 
             domain, difficulty, previous_topic: previousTopic 
         });
         const { question_title, question_text, test_cases, boilerplates } = aiResponse.data;
 
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content) VALUES ($1, $2, $3)',
-            [sessionId, 'AI', `PHASE 2 INITIATED.\n\nNew Challenge: ${question_title}\n\n${question_text}`]
+            [sessionId, 'AI', `Phase 2 initiated.\n\nNew Challenge: ${question_title}\n\n${question_text}`]
         );
 
         res.json({
@@ -75,7 +83,7 @@ app.post('/api/interview/chat', async (req, res) => {
         
         const chatHistory = historyQuery.rows.map(row => `${row.sender_type}: ${row.message_content}`);
 
-        const aiResponse = await axios.post('http://127.0.0.1:8000/chat', {
+        const aiResponse = await axios.post(`${AI_URL}/chat`, {
             domain,
             message,
             chat_history: chatHistory,
@@ -96,7 +104,7 @@ app.post('/api/interview/chat', async (req, res) => {
 app.post('/api/interview/run', async (req, res) => {
     const { code, language, testCases } = req.body;
     try {
-        const aiResponse = await axios.post('http://127.0.0.1:8000/run', {
+        const aiResponse = await axios.post(`${AI_URL}/run`, {
             code, language, test_cases: testCases
         });
         res.json(aiResponse.data);
@@ -124,7 +132,7 @@ app.post('/api/interview/submit', async (req, res) => {
             catch(e) { return `Interviewer: ${row.message_content}`; }
         });
 
-        const aiResponse = await axios.post('http://127.0.0.1:8000/grade', {
+        const aiResponse = await axios.post(`${AI_URL}/grade`, {
             topic, domain, language, user_code: userCode, chat_history: chatHistory
         });
 
