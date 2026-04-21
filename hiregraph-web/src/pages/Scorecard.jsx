@@ -25,20 +25,20 @@ export default function Scorecard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#030000] flex items-center justify-center font-sans tracking-[0.2em] uppercase text-red-400 text-sm">
+      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans">
         <Constellation />
-        <div className="relative z-10 animate-pulse">Decrypting Evaluation Data...</div>
+        <div className="relative z-10 text-[#8B949E] text-sm animate-pulse font-light">Loading Evaluation Data...</div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-[#030000] text-white flex flex-col items-center justify-center font-sans">
+      <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center font-sans">
         <Constellation />
         <div className="relative z-10 text-center">
-          <div className="text-red-500 mb-4 tracking-[0.2em] uppercase">Data Corrupted or Missing</div>
-          <button onClick={() => navigate('/past-interviews')} className="text-xs text-orange-400 hover:text-white border border-orange-900/50 px-6 py-2 rounded uppercase tracking-widest transition-colors">
+          <div className="text-[#f85149] mb-4 text-sm font-medium">Data Corrupted or Missing</div>
+          <button onClick={() => navigate('/past-interviews')} className="text-sm text-[#9BA3AF] hover:text-[#E6EDF3] border border-[#30363d] px-4 py-2 rounded-md transition-colors bg-[#21262d]">
             Return to Archive
           </button>
         </div>
@@ -61,66 +61,62 @@ export default function Scorecard() {
   const finalScore = data.session.final_score || 0;
 
   return (
-    <div className="min-h-screen bg-[#030000] text-white font-sans flex flex-col relative overflow-hidden">
-      <div className="absolute bottom-[-30%] left-1/2 -translate-x-1/2 w-[150%] h-[80%] bg-red-950/80 blur-[120px] rounded-[100%] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-full h-[50%] bg-red-800/40 blur-[100px] rounded-[100%] pointer-events-none z-0"></div>
-      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-linear-to-r from-transparent via-orange-500/80 to-transparent pointer-events-none shadow-[0_0_20px_rgba(249,115,22,1)] z-0"></div>
-      
+    <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">
       <Constellation />
       
-      <div className="relative z-10 flex-1 flex flex-col max-w-5xl mx-auto w-full p-8">
-        <header className="flex justify-between items-center mb-10 border-b border-red-900/30 pb-6">
-          <button onClick={() => navigate('/past-interviews')} className="text-[10px] tracking-[0.3em] text-red-200/50 hover:text-white transition-colors uppercase">
+      <div className="relative z-10 flex-1 flex flex-col max-w-4xl mx-auto w-full p-8">
+        <header className="flex justify-between items-center mb-10 border-b border-[#30363d] pb-6">
+          <button onClick={() => navigate('/past-interviews')} className="text-sm text-[#9BA3AF] hover:text-[#E6EDF3] transition-colors">
             ← Back to Archive
           </button>
-          <div className="text-xs font-light tracking-[0.4em] text-red-200/80 uppercase">Evaluation Report</div>
+          <div className="text-sm font-medium text-[#8B949E]">Evaluation Report</div>
         </header>
         
-        <div className="bg-black/60 backdrop-blur-xl rounded-sm p-10 border border-red-900/30 shadow-2xl">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 border-b border-red-900/30 pb-10">
+        <div className="bg-[#161b22] rounded-xl p-8 border border-[#30363d] shadow-sm">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-[#30363d] pb-8">
             <div>
-              <div className="text-[10px] tracking-[0.4em] text-orange-500/70 mb-2 uppercase">Target Acquired</div>
-              <h1 className="text-3xl md:text-4xl font-light text-white tracking-widest uppercase mb-2">{data.session.topic}</h1>
-              <p className="text-red-200/40 text-xs tracking-[0.15em] uppercase">
-                Temporal Marker: {new Date(data.session.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              <div className="text-xs text-[#8B949E] mb-1 font-medium">Challenge Domain</div>
+              <h1 className="text-2xl font-semibold text-[#E6EDF3] mb-1">{data.session.topic}</h1>
+              <p className="text-[#8B949E] text-xs">
+                {new Date(data.session.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
             <div className="mt-6 md:mt-0 text-right">
-              <div className="text-[10px] tracking-[0.4em] text-red-200/50 mb-2 uppercase">Final Assessment</div>
-              <div className={`text-6xl font-light tracking-tighter ${finalScore >= 80 ? 'text-green-400 drop-shadow-[0_0_15px_rgba(74,222,128,0.3)]' : finalScore >= 50 ? 'text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.3)]' : 'text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}>
-                {finalScore}<span className="text-2xl text-red-200/30">/100</span>
+              <div className="text-xs text-[#8B949E] mb-1 font-medium">Final Assessment</div>
+              <div className={`text-5xl font-semibold ${finalScore >= 80 ? 'text-[#3fb950]' : finalScore >= 50 ? 'text-[#d29922]' : 'text-[#f85149]'}`}>
+                {finalScore}<span className="text-lg text-[#8B949E]">/100</span>
               </div>
             </div>
           </div>
 
-          <div className={`p-4 rounded-sm mb-10 font-light text-sm tracking-widest uppercase border ${
-            finalScore >= 80 ? 'bg-green-950/20 text-green-300 border-green-900/50' : 
-            finalScore >= 50 ? 'bg-orange-950/20 text-orange-300 border-orange-900/50' : 
-            'bg-red-950/20 text-red-300 border-red-900/50'
+          <div className={`p-4 rounded-md mb-8 text-sm font-medium border ${
+            finalScore >= 80 ? 'bg-[#2ea043]/10 text-[#3fb950] border-[#2ea043]/30' : 
+            finalScore >= 50 ? 'bg-[#d29922]/10 text-[#d29922] border-[#d29922]/30' : 
+            'bg-[#f85149]/10 text-[#f85149] border-[#f85149]/30'
           }`}>
             {finalScore >= 80 ? 'Optimal constraints achieved. Code is production ready.' : 
              finalScore >= 50 ? 'Logic functional. Sub-optimal resource consumption detected.' : 
              'Critical inefficiencies. Review metrics for architectural failure points.'}
           </div>
 
-          <h2 className="text-[10px] tracking-[0.4em] text-red-200/50 mb-4 uppercase">Performance Telemetry</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            <div className="bg-black/40 p-6 border border-red-900/20">
-              <div className="text-[10px] tracking-[0.2em] text-orange-500/70 mb-2 uppercase">Time Complexity</div>
-              <div className="font-mono text-xl text-white">{metrics.time_complexity || 'N/A'}</div>
+          <h2 className="text-xs text-[#8B949E] font-medium mb-3">Performance Telemetry</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+              <div className="text-xs text-[#8B949E] mb-1">Time Complexity</div>
+              <div className="font-mono text-base text-[#D1D5DB]">{metrics.time_complexity || 'N/A'}</div>
             </div>
-            <div className="bg-black/40 p-6 border border-red-900/20">
-              <div className="text-[10px] tracking-[0.2em] text-orange-500/70 mb-2 uppercase">Space Complexity</div>
-              <div className="font-mono text-xl text-white">{metrics.space_complexity || 'N/A'}</div>
+            <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+              <div className="text-xs text-[#8B949E] mb-1">Space Complexity</div>
+              <div className="font-mono text-base text-[#D1D5DB]">{metrics.space_complexity || 'N/A'}</div>
             </div>
-            <div className="bg-black/40 p-6 border border-red-900/20">
-              <div className="text-[10px] tracking-[0.2em] text-orange-500/70 mb-2 uppercase">Code Quality</div>
-              <div className="font-light tracking-widest text-xl text-white uppercase">{metrics.code_quality || 'N/A'}</div>
+            <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+              <div className="text-xs text-[#8B949E] mb-1">Code Quality</div>
+              <div className="font-medium text-base text-[#D1D5DB]">{metrics.code_quality || 'N/A'}</div>
             </div>
           </div>
 
-          <h2 className="text-[10px] tracking-[0.4em] text-red-200/50 mb-4 uppercase">System Analysis</h2>
-          <div className="bg-black/40 p-8 border border-red-900/20 text-red-100/70 leading-loose text-sm font-light tracking-wide whitespace-pre-wrap">
+          <h2 className="text-xs text-[#8B949E] font-medium mb-3">System Analysis</h2>
+          <div className="bg-[#0d1117] p-6 rounded-lg border border-[#30363d] text-[#9BA3AF] leading-relaxed text-sm font-light whitespace-pre-wrap">
             {parsedContent.feedback}
           </div>
         </div>

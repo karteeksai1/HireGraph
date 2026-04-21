@@ -61,65 +61,60 @@ export default function InterviewSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030000] text-white font-sans flex flex-col relative overflow-hidden">
-      <div className="absolute bottom-[-30%] left-1/2 -translate-x-1/2 w-[150%] h-[80%] bg-red-950/80 blur-[120px] rounded-[100%] pointer-events-none z-0"></div>
-      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-orange-500/80 to-transparent pointer-events-none shadow-[0_0_20px_rgba(249,115,22,1)] z-0"></div>
-
+    <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">
       <Constellation />
       
-      <div className="relative z-10 flex-1 flex flex-col max-w-5xl mx-auto w-full p-8">
-        <header className="flex justify-between items-center mb-12 border-b border-red-900/30 pb-6">
-          <button onClick={() => navigate('/dashboard')} className="text-[10px] tracking-[0.3em] text-red-200/50 hover:text-white transition-colors uppercase">
-            ← Abort
+      <div className="relative z-10 flex-1 flex flex-col max-w-4xl mx-auto w-full p-8">
+        <header className="flex justify-between items-center mb-12 border-b border-[#30363d] pb-6">
+          <button onClick={() => navigate('/dashboard')} className="text-sm text-[#9BA3AF] hover:text-[#E6EDF3] transition-colors">
+            ← Back
           </button>
-          <h1 className="text-xs font-light tracking-[0.4em] text-red-200/80 uppercase">HireGraph</h1>
+          <h1 className="text-sm font-medium text-[#8B949E] tracking-widest uppercase">Configuration</h1>
         </header>
 
-        <main className="flex-1 flex flex-col max-w-3xl w-full mx-auto">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl md:text-4xl font-light mb-4 text-transparent bg-clip-text bg-gradient-to-r from-red-200 via-white to-orange-200 tracking-[0.2em] uppercase">
-              Set Up Your Interview 
+        <main className="flex-1 flex flex-col w-full mx-auto">
+          <div className="mb-10">
+            <h2 className="text-3xl font-semibold mb-3 bg-gradient-to-r from-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
+              Session Parameters
             </h2>
-            <p className="text-red-200/50 text-xs tracking-[0.2em] uppercase italic">Choose what you want to practice.</p>
+            <p className="text-[#8B949E] text-sm font-light">Configure domain and difficulty level.</p>
           </div>
 
-          <div className="space-y-8 bg-black/40 backdrop-blur-xl p-10 rounded-sm border border-red-900/20 shadow-2xl">
+          <div className="space-y-8 bg-[#161b22] p-8 rounded-xl border border-[#30363d]">
             <div>
-              <h3 className="text-xs font-light mb-6 flex items-center gap-3 text-red-300 uppercase tracking-[0.3em]">
-                <span className="flex items-center justify-center w-6 h-6 border border-red-500/30 text-red-400 text-[10px]">1</span> 
-                Domain Vector
+              <h3 className="text-sm font-medium mb-4 text-[#D1D5DB]">
+                1. Domain Vector
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {Object.entries(domains).map(([key, label]) => (
                   <button
                     key={key}
                     onClick={() => setDomain(key)}
-                    className={`p-6 border text-center transition-all duration-500 ${
+                    className={`p-4 rounded-lg border text-left transition-all duration-200 ${
                       domain === key 
-                        ? 'border-orange-500/60 bg-red-900/20 shadow-[0_0_20px_rgba(249,115,22,0.15)]' 
-                        : 'border-red-900/30 bg-black/40 hover:border-red-500/50'
+                        ? 'border-[#6366F1] bg-[#6366F1]/10' 
+                        : 'border-[#30363d] bg-[#0d1117] hover:border-[#8B949E]'
                     }`}
                   >
-                    <div className={`font-light text-sm tracking-[0.1em] uppercase ${domain === key ? 'text-white' : 'text-red-200/60'}`}>{label}</div>
+                    <div className={`font-light text-sm ${domain === key ? 'text-[#E6EDF3]' : 'text-[#9BA3AF]'}`}>{label}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className={`transition-all duration-700 ${domain ? 'opacity-100 translate-y-0' : 'opacity-20 pointer-events-none translate-y-4'}`}>
-              <h3 className="text-xs font-light mb-6 flex items-center gap-3 text-orange-300 uppercase tracking-[0.3em]">
-                <span className="flex items-center justify-center w-6 h-6 border border-orange-500/30 text-orange-400 text-[10px]">2</span> 
-                Difficulty Level
+            <div className={`transition-opacity duration-300 ${domain ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+              <h3 className="text-sm font-medium mb-4 text-[#D1D5DB]">
+                2. Difficulty Level
               </h3>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex gap-3">
                 {difficulties.map(diff => (
                   <button
                     key={diff}
                     onClick={() => setDifficulty(diff)}
-                    className={`flex-1 py-4 border text-xs tracking-[0.15em] uppercase transition-all duration-500 ${
+                    className={`flex-1 py-3 rounded-lg border text-sm capitalize transition-all duration-200 ${
                       difficulty === diff
-                        ? 'border-orange-400 bg-orange-900/20 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]'
-                        : 'border-red-900/30 bg-black/40 text-red-200/50 hover:border-red-500/50 hover:text-red-100'
+                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#E6EDF3]'
+                        : 'border-[#30363d] bg-[#0d1117] text-[#9BA3AF] hover:border-[#8B949E]'
                     }`}
                   >
                     {diff}
@@ -129,17 +124,17 @@ export default function InterviewSetup() {
             </div>
           </div>
 
-          <div className="mt-12 text-center pb-12">
+          <div className="mt-8 text-right">
             <button
               onClick={startInterview}
               disabled={!domain || !difficulty || isStarting}
-              className={`w-full max-w-md mx-auto py-5 border font-light text-sm uppercase tracking-[0.3em] transition-all duration-700 ${
+              className={`px-8 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
                 !domain || !difficulty
-                  ? 'bg-black/50 text-red-900/50 cursor-not-allowed border-red-950' 
-                  : 'bg-red-950/40 border-orange-500/50 hover:bg-red-900/60 hover:border-orange-400 text-white shadow-[0_0_30px_rgba(220,38,38,0.3)]'
+                  ? 'bg-[#21262d] text-[#8B949E] cursor-not-allowed border border-[#30363d]' 
+                  : 'bg-[#6366F1] hover:bg-[#4f46e5] text-white shadow-sm'
               }`}
             >
-              {isStarting ? 'Initiating...' : 'START INTERVIEW'}
+              {isStarting ? 'Initiating...' : 'Start Session'}
             </button>
           </div>
         </main>

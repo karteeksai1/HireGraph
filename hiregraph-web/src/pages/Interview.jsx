@@ -42,7 +42,7 @@ export default function Interview() {
       setChatHistory([
         {
           sender: 'AI',
-          message: `Welcome ${candidateName}. Phase 1 initiated. Difficulty: ${difficulty.toUpperCase()}.\n\nChallenge: ${topic}\n\n${questionText}`
+          message: `Welcome ${candidateName}. Phase 1 initiated. Difficulty: ${difficulty}.\n\nChallenge: ${topic}\n\n${questionText}`
         }
       ]);
     }
@@ -110,7 +110,7 @@ export default function Interview() {
     
     setChatHistory(prev => [...prev, { 
       sender: 'USER', 
-      message: `Submitted ${language.toUpperCase()} architecture for evaluation.`,
+      message: `Submitted ${language} solution for evaluation.`,
       submitted_code: userCode 
     }]);
 
@@ -158,7 +158,7 @@ export default function Interview() {
           
           setChatHistory(prev => [...prev, { 
             sender: 'AI', 
-            message: `PHASE 2 INITIATED.\n\nNew Challenge: ${response.data.topic}\n\n${response.data.question}` 
+            message: `Phase 2 initiated.\n\nNew Challenge: ${response.data.topic}\n\n${response.data.question}` 
           }]);
 
       } catch (error) {
@@ -179,30 +179,30 @@ export default function Interview() {
   };
 
   return (
-    <div className="flex h-screen bg-[#030000] text-white font-sans overflow-hidden">
-      <div className="w-[35%] flex flex-col border-r border-red-900/30 bg-black/40 backdrop-blur-md z-10 relative">
-        <div className="p-4 border-b border-red-900/30 flex justify-between items-center">
-           <button onClick={() => navigate('/dashboard')} className="text-[10px] tracking-[0.3em] text-red-200/50 hover:text-white uppercase">
-            ← Abort
+    <div className="flex h-screen bg-[#0d1117] font-sans overflow-hidden">
+      <div className="w-[35%] flex flex-col border-r border-[#30363d] bg-[#0d1117] z-10 relative">
+        <div className="p-4 border-b border-[#30363d] flex justify-between items-center bg-[#161b22]">
+           <button onClick={() => navigate('/dashboard')} className="text-sm text-[#8B949E] hover:text-[#E6EDF3] transition-colors">
+            ← Dashboard
           </button>
-          <div className="text-xs text-red-500/70 tracking-[0.2em] font-mono">ID:{sessionId?.toString().substring(0,6)} | P{questionNumber}</div>
+          <div className="text-xs text-[#8B949E] font-mono">ID: {sessionId?.toString().substring(0,6)}</div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 scrollbar-thin scrollbar-thumb-red-900/50">
+        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 scrollbar-thin scrollbar-thumb-[#30363d]">
           {chatHistory.map((msg, idx) => (
             <div key={idx} className={`max-w-[90%] ${msg.sender === 'AI' ? 'self-start' : 'self-end'}`}>
-              <div className={`text-[10px] tracking-[0.2em] uppercase mb-2 ${msg.sender === 'AI' ? 'text-red-400' : 'text-orange-400 text-right'}`}>
+              <div className={`text-xs mb-1.5 font-medium ${msg.sender === 'AI' ? 'text-[#D1D5DB]' : 'text-[#9BA3AF] text-right'}`}>
                 {msg.sender === 'AI' ? 'System' : candidateName}
               </div>
-              <div className={`p-4 rounded-sm border ${msg.sender === 'AI' ? 'bg-red-950/20 border-red-900/30 text-red-100/90' : 'bg-orange-950/20 border-orange-900/30 text-orange-100/90'}`}>
+              <div className={`p-4 rounded-lg border ${msg.sender === 'AI' ? 'bg-[#161b22] border-[#30363d] text-[#E6EDF3]' : 'bg-[#6366F1]/10 border-[#6366F1]/30 text-[#E6EDF3]'}`}>
                 <div className="text-sm font-light leading-relaxed whitespace-pre-wrap">{msg.message}</div>
                 {msg.submitted_code && (
-                    <div className="mt-3 bg-black/60 p-3 rounded-sm font-mono text-[10px] text-gray-400 line-clamp-3 border border-orange-900/30">
+                    <div className="mt-3 bg-[#0d1117] p-3 rounded font-mono text-xs text-[#8B949E] line-clamp-3 border border-[#30363d]">
                         {msg.submitted_code}
                     </div>
                 )}
                 {msg.isPassed !== undefined && (
-                  <div className={`mt-4 p-2 font-mono text-[10px] tracking-widest uppercase border ${msg.isPassed ? 'bg-green-950/20 text-green-400 border-green-900/50' : 'bg-red-950/20 text-red-400 border-red-900/50'}`}>
+                  <div className={`mt-4 p-2 font-mono text-xs border rounded ${msg.isPassed ? 'bg-[#2ea043]/10 text-[#3fb950] border-[#2ea043]/30' : 'bg-[#f85149]/10 text-[#f85149] border-[#f85149]/30'}`}>
                     {msg.isPassed ? 'Verification Passed' : 'Verification Failed'}
                     {msg.score !== undefined && <span className="ml-3">Score: {msg.score}</span>}
                   </div>
@@ -210,39 +210,39 @@ export default function Interview() {
               </div>
             </div>
           ))}
-          {isEvaluating && <div className="text-xs tracking-widest uppercase text-red-500 animate-pulse">Evaluating Architecture...</div>}
-          {isFetchingNext && <div className="text-xs tracking-widest uppercase text-orange-500 animate-pulse">Initializing Phase 2...</div>}
+          {isEvaluating && <div className="text-xs text-[#8B949E] animate-pulse">Evaluating Architecture...</div>}
+          {isFetchingNext && <div className="text-xs text-[#8B949E] animate-pulse">Initializing Phase 2...</div>}
           <div ref={chatEndRef} />
         </div>
 
-        <div className="p-4 border-t border-red-900/30 bg-black/60">
+        <div className="p-4 border-t border-[#30363d] bg-[#161b22]">
           <div className="flex gap-2">
             <input 
               type="text" 
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Request assistance or clarify limits..."
-              className="flex-1 bg-red-950/20 border border-red-900/50 rounded-sm px-4 py-2 text-sm text-white focus:outline-none focus:border-orange-500 font-light"
+              placeholder="Ask for a hint or clarify constraints..."
+              className="flex-1 bg-[#0d1117] border border-[#30363d] rounded-md px-4 py-2 text-sm text-[#E6EDF3] focus:outline-none focus:border-[#6366F1] font-light placeholder-[#8B949E]"
             />
             <button 
               onClick={sendChatMessage}
-              className="bg-red-900/40 border border-red-800/50 hover:bg-orange-900/40 hover:border-orange-500/50 px-4 py-2 rounded-sm text-xs tracking-widest uppercase transition-colors"
+              className="bg-[#21262d] border border-[#30363d] hover:border-[#6366F1] text-[#D1D5DB] hover:text-[#E6EDF3] px-4 py-2 rounded-md text-sm transition-colors"
             >
-              Transmit
+              Send
             </button>
           </div>
         </div>
       </div>
 
-      <div className="w-[65%] flex flex-col z-10 relative bg-[#0a0a0a]">
-        <div className="flex justify-between items-center p-3 border-b border-red-900/30 bg-black/60 backdrop-blur-md">
+      <div className="w-[65%] flex flex-col z-10 relative bg-[#0d1117]">
+        <div className="flex justify-between items-center p-3 border-b border-[#30363d] bg-[#161b22]">
           <div className="flex items-center gap-4 ml-4">
-            <h2 className="text-sm font-light tracking-[0.1em] text-white uppercase">{topic}</h2>
+            <h2 className="text-sm font-medium text-[#D1D5DB]">{topic}</h2>
             <select 
               value={language} 
               onChange={(e) => setLanguage(e.target.value)}
-              className="bg-red-950/30 text-orange-200 border border-red-900/50 rounded-sm px-3 py-1 focus:outline-none focus:border-orange-500 font-mono text-xs cursor-pointer hover:bg-red-900/50"
+              className="bg-[#0d1117] text-[#9BA3AF] border border-[#30363d] rounded-md px-3 py-1 focus:outline-none focus:border-[#6366F1] font-mono text-xs cursor-pointer hover:bg-[#21262d]"
             >
               <option value="python">Python</option>
               <option value="javascript">JavaScript</option>
@@ -252,18 +252,18 @@ export default function Interview() {
             </select>
           </div>
           
-          <div className="flex gap-3 mr-2">
+          <div className="flex gap-2 mr-2">
             <button 
               onClick={runCode}
               disabled={isRunning}
-              className="px-4 py-1.5 border border-gray-600 bg-gray-800/50 hover:bg-gray-700 rounded-sm font-light text-[10px] tracking-widest uppercase transition-colors text-gray-300"
+              className="px-4 py-1.5 border border-[#30363d] bg-[#21262d] hover:bg-[#30363d] rounded-md font-medium text-xs text-[#D1D5DB] transition-colors"
             >
               {isRunning ? 'Running...' : 'Run'}
             </button>
             <button 
               onClick={submitCode}
               disabled={!sessionId || isEvaluating}
-              className="px-6 py-1.5 border border-orange-500/50 bg-orange-950/40 hover:bg-orange-900/60 rounded-sm font-light text-[10px] tracking-widest uppercase transition-colors text-orange-100 shadow-[0_0_10px_rgba(249,115,22,0.2)]"
+              className="px-5 py-1.5 border border-transparent bg-[#6366F1] hover:bg-[#4f46e5] rounded-md font-medium text-xs text-white transition-colors"
             >
               Submit
             </button>
@@ -272,14 +272,14 @@ export default function Interview() {
                 <button 
                   onClick={loadNextQuestion}
                   disabled={isFetchingNext}
-                  className="px-4 py-1.5 border border-red-800/50 bg-red-950/40 hover:bg-red-900/60 rounded-sm font-light text-[10px] tracking-widest uppercase transition-colors text-red-300 ml-4"
+                  className="px-4 py-1.5 border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] rounded-md font-medium text-xs text-[#9BA3AF] transition-colors ml-4"
                 >
                   {isFetchingNext ? 'Loading...' : 'Skip / Next'}
                 </button>
             ) : (
                 <button 
                   onClick={finishInterview}
-                  className="px-4 py-1.5 border border-red-800/50 bg-red-950/40 hover:bg-red-900/60 rounded-sm font-light text-[10px] tracking-widest uppercase transition-colors text-red-300 ml-4"
+                  className="px-4 py-1.5 border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] rounded-md font-medium text-xs text-[#9BA3AF] transition-colors ml-4"
                 >
                   Finish
                 </button>
@@ -298,16 +298,16 @@ export default function Interview() {
           />
         </div>
 
-        <div className="h-[30%] border-t border-red-900/30 bg-black/80 flex flex-col">
-          <div className="flex border-b border-red-900/30">
-            <div className="px-4 py-2 text-[10px] tracking-[0.2em] text-red-500/70 uppercase flex items-center border-r border-red-900/30">
+        <div className="h-[30%] border-t border-[#30363d] bg-[#0d1117] flex flex-col">
+          <div className="flex border-b border-[#30363d] bg-[#161b22]">
+            <div className="px-4 py-2 text-xs font-medium text-[#8B949E] flex items-center border-r border-[#30363d]">
               Test Cases
             </div>
             {testCases.map((tc, idx) => (
               <button 
                 key={idx}
                 onClick={() => setActiveTestCase(idx)}
-                className={`px-6 py-2 text-xs font-mono transition-colors ${activeTestCase === idx ? 'bg-red-950/40 text-orange-300 border-b-2 border-orange-500' : 'text-gray-500 hover:bg-red-950/20 hover:text-gray-300'}`}
+                className={`px-6 py-2 text-xs font-mono transition-colors ${activeTestCase === idx ? 'bg-[#0d1117] text-[#E6EDF3] border-t-2 border-t-[#6366F1]' : 'text-[#8B949E] hover:bg-[#21262d] hover:text-[#D1D5DB]'}`}
               >
                 Case {idx + 1}
               </button>
@@ -318,26 +318,26 @@ export default function Interview() {
             {testCases.length > 0 ? (
               <div className="flex flex-col gap-4">
                 <div>
-                  <div className="text-gray-500 mb-1">Input:</div>
-                  <div className="bg-[#1e1e1e] p-3 rounded-sm text-gray-300 border border-gray-800">{testCases[activeTestCase]?.input}</div>
+                  <div className="text-[#8B949E] mb-1">Input:</div>
+                  <div className="bg-[#161b22] p-3 rounded-md text-[#D1D5DB] border border-[#30363d]">{testCases[activeTestCase]?.input}</div>
                 </div>
                 <div>
-                  <div className="text-gray-500 mb-1">Expected Output:</div>
-                  <div className="bg-[#1e1e1e] p-3 rounded-sm text-gray-300 border border-gray-800">{testCases[activeTestCase]?.expected_output}</div>
+                  <div className="text-[#8B949E] mb-1">Expected Output:</div>
+                  <div className="bg-[#161b22] p-3 rounded-md text-[#D1D5DB] border border-[#30363d]">{testCases[activeTestCase]?.expected_output}</div>
                 </div>
                 {testResults && testResults[activeTestCase] && (
                   <div>
-                    <div className={`mb-1 ${testResults[activeTestCase].passed ? 'text-green-500' : 'text-red-500'}`}>
+                    <div className={`mb-1 ${testResults[activeTestCase].passed ? 'text-[#3fb950]' : 'text-[#f85149]'}`}>
                       Actual Output {testResults[activeTestCase].passed ? '(Passed)' : '(Failed)'}:
                     </div>
-                    <div className={`bg-[#1e1e1e] p-3 rounded-sm border ${testResults[activeTestCase].passed ? 'border-green-900/50 text-green-300' : 'border-red-900/50 text-red-300'}`}>
+                    <div className={`bg-[#161b22] p-3 rounded-md border ${testResults[activeTestCase].passed ? 'border-[#2ea043]/50 text-[#3fb950]' : 'border-[#f85149]/50 text-[#f85149]'}`}>
                       {testResults[activeTestCase].actual_output}
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-gray-600 flex h-full items-center justify-center">No test cases generated.</div>
+              <div className="text-[#8B949E] flex h-full items-center justify-center font-sans">No test cases generated.</div>
             )}
           </div>
         </div>
