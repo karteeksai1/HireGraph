@@ -14,7 +14,8 @@ export default function Dashboard() {
       navigate('/login');
     }
   }, [navigate]);
-
+const storedUser = JSON.parse(localStorage.getItem('hiregraph_user') || '{}');
+const firstName = storedUser.name ? storedUser.name.split(' ')[0] : 'Engineer';
   return (
     <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">
       <Constellation />
@@ -33,13 +34,13 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="max-w-5xl mx-auto px-8 pt-32 pb-16 flex flex-col items-center text-center">
-          <p className="text-[#9BA3AF] text-lg mb-2 tracking-wide font-light">Welcome back,</p>
-          <h2 className="text-5xl font-semibold mb-6 bg-linear-to-rrom-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
-            {userName}
-          </h2>
-          <p className="text-[#8B949E] text-lg mb-16 max-w-2xl leading-relaxed font-light">
-            Practice technical interviews with AI-powered feedback. Pick a domain, select your topic, and elevate your engineering skills.
+        <div className="text-center mb-16 z-10 relative">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-6">
+            Welcome back, <span className="text-blue-500">{firstName}</span>
+          </h1>
+          <p className="text-gray-200 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-medium shadow-sm">
+            Practice technical interviews with AI-powered feedback. Pick a domain, select your
+            topic, and elevate your engineering skills.
           </p>
         </div>
 
