@@ -35,7 +35,7 @@ export default function Dashboard() {
 
         <div className="max-w-5xl mx-auto px-8 pt-32 pb-16 flex flex-col items-center text-center">
           <p className="text-[#9BA3AF] text-lg mb-2 tracking-wide font-light">Welcome back,</p>
-          <h2 className="text-5xl font-semibold mb-6 bg-gradient-to-r from-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
+          <h2 className="text-5xl font-semibold mb-6 bg-linear-to-rrom-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
             {userName}
           </h2>
           <p className="text-[#8B949E] text-lg mb-16 max-w-2xl leading-relaxed font-light">

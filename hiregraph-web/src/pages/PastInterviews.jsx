@@ -57,7 +57,7 @@ export default function PastInterviews() {
 
         <main className="flex-1 flex flex-col max-w-5xl w-full mx-auto p-8">
           <div className="mb-12">
-            <h2 className="text-3xl font-semibold mb-3 bg-gradient-to-r from-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
+            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-r from-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
               Past Sessions
             </h2>
             <p className="text-[#8B949E] text-sm font-light">Review your archival interview data and AI evaluations.</p>

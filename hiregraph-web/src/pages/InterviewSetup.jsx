@@ -74,7 +74,7 @@ export default function InterviewSetup() {
 
         <main className="flex-1 flex flex-col w-full mx-auto">
           <div className="mb-10">
-            <h2 className="text-3xl font-semibold mb-3 bg-gradient-to-r from-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
+            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-rrom-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
               Session Parameters
             </h2>
             <p className="text-[#8B949E] text-sm font-light">Configure domain and difficulty level.</p>

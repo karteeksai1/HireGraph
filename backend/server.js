@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const axios = require('axios');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
@@ -20,6 +21,60 @@ const pool = new Pool({
 });
 
 const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
+app.post('/api/signup', async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+        const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userExists.rows.length > 0) return res.status(400).json({ error: 'User already exists' });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = await pool.query(
+            'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email',
+            [name, email, hashedPassword]
+        );
+        res.json(newUser.rows[0]);
+    } catch (err) {
+        console.error("Signup error:", err);
+        res.status(500).json({ error: 'Server error during signup' });
+    }
+});
+
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (user.rows.length === 0) return res.status(400).json({ error: 'User not found' });
+
+        const validPassword = await bcrypt.compare(password, user.rows[0].password);
+        if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+
+        res.json({ id: user.rows[0].id, name: user.rows[0].name, email: user.rows[0].email });
+    } catch (err) {
+        console.error("Login error:", err);
+        res.status(500).json({ error: 'Server error during login' });
+    }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+    const { email, name } = req.body;
+    try {
+        let user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        
+        // If Google user doesn't exist, create an account automatically
+        if (user.rows.length === 0) {
+            user = await pool.query(
+                'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email',
+                [name || 'Google User', email, 'google_oauth_user'] 
+            );
+        }
+        res.json({ id: user.rows[0].id, name: user.rows[0].name, email: user.rows[0].email });
+    } catch (err) {
+        console.error("Google Auth error:", err);
+        res.status(500).json({ error: 'Google auth failed' });
+    }
+});
 
 app.post('/api/interview/start', async (req, res) => {
     const { userId, candidateName, domain, difficulty } = req.body;
