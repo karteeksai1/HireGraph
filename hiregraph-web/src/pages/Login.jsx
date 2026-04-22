@@ -17,10 +17,10 @@ export default function Login() {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/login';
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}${endpoint}`, formData);
+      const endpoint = isSignUp ? '/api/signup' : '/api/login';
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}${endpoint}`, formData);
       
-      localStorage.setItem('hiregraph_user', JSON.stringify(response.data.user));
+      localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Authentication failed');
@@ -29,11 +29,11 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/auth/google`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/auth/google`, {
         credential: credentialResponse.credential
       });
       
-      localStorage.setItem('hiregraph_user', JSON.stringify(response.data.user));
+      localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
       navigate('/dashboard');
     } catch (err) {
       setError('Google Authentication failed');
