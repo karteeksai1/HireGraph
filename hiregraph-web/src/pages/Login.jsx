@@ -29,13 +29,22 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
+      // 1. Decode the encrypted Google JWT token
+      const base64Url = credentialResponse.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const decodedToken = JSON.parse(window.atob(base64));
+
+      // 2. Send the actual email and name to your Node.js backend
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/auth/google`, {
-        credential: credentialResponse.credential
+        email: decodedToken.email,
+        name: decodedToken.name
       });
       
+      // 3. Save the user and redirect to dashboard
       localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
       navigate('/dashboard');
     } catch (err) {
+      console.error("Full Google Error:", err); // This prints the real error to your console
       setError('Google Authentication failed');
     }
   };
