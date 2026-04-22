@@ -104,7 +104,8 @@ app.post('/api/interview/start', async (req, res) => {
             boilerplates: boilerplates
         });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to start session' });
+        console.error("🔥🔥🔥 CRASH IN /api/interview/start:", err); // THIS IS THE MAGIC LINE
+        res.status(500).json({ error: 'Failed to start interview' });
     }
 });
 
