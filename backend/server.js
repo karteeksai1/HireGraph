@@ -48,20 +48,35 @@ app.post('/api/signup', async (req, res) => {
     }
 });
 
-app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
+app.post('/login', async (req, res) => {
     try {
-        const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (user.rows.length === 0) return res.status(400).json({ error: 'User not found' });
+        const { email, password } = req.body;
 
-        // Fixed: Compare against password_hash instead of password
-        const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
-        if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+        // GUARD 1: Did the frontend actually send a password?
+        if (!password) {
+            return res.status(400).json({ error: "Password is required" });
+        }
 
-        res.json({ id: user.rows[0].id, name: user.rows[0].name, email: user.rows[0].email });
-    } catch (err) {
-        console.error("Login error:", err);
-        res.status(500).json({ error: 'Server error during login' });
+        // Fetch user from your database (adjust this line based on your DB setup)
+        const user = await User.findOne({ email }); 
+
+        // GUARD 2: Does the user exist in the database?
+        if (!user || !user.password) {
+            return res.status(401).json({ error: "Invalid email or password" });
+        }
+
+        // NOW it is safe to run bcrypt
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ error: "Invalid email or password" });
+        }
+
+        // ... continue with login (send JWT, etc.) ...
+
+    } catch (error) {
+        console.error("Login error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
