@@ -52,9 +52,16 @@ def retrieve_question(state: dict):
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
-        print(f"🚨 GROQ CRASH REPORT: {type(e).__name__} - {str(e)}")
-        return {"question_title": "Error", "question_text": "Failed to generate.", "test_cases": [], "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}}
-
+        # We grab the exact error from Groq
+        exact_error = f"🚨 BACKEND CRASH: {type(e).__name__} -> {str(e)}"
+        
+        # We force it to render on your frontend screen!
+        return {
+            "question_title": "System Error", 
+            "question_text": exact_error, 
+            "test_cases": [], 
+            "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
+        }
 def grade_submission(state: InterviewState):
     user_code = state.get("user_code", "")
     language = state.get("language", "python")
