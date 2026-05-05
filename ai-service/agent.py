@@ -52,6 +52,7 @@ def retrieve_question(state: dict):
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
+        print(f"🚨 GROQ CRASH REPORT: {type(e).__name__} - {str(e)}")
         return {"question_title": "Error", "question_text": "Failed to generate.", "test_cases": [], "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}}
 
 def grade_submission(state: InterviewState):
