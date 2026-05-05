@@ -47,7 +47,7 @@ def retrieve_question(state: dict):
     try:
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             response_format={"type": "json_object"}
         )
         return json.loads(response.choices[0].message.content)
@@ -95,7 +95,7 @@ def grade_submission(state: InterviewState):
     try:
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             response_format={"type": "json_object"}
         )
         result = json.loads(response.choices[0].message.content)
@@ -127,7 +127,7 @@ def get_chat_response(domain: str, history: list, message: str, question: str):
     try:
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192"
+            model="llama-3.1-8b-instant"
         )
         return response.choices[0].message.content
     except:
@@ -147,7 +147,7 @@ def dry_run_code(code: str, language: str, test_cases: list):
     try:
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             response_format={"type": "json_object"}
         )
         return json.loads(response.choices[0].message.content)
