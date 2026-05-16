@@ -86,10 +86,25 @@ def retrieve_question(state: dict):
         }
 
 def grade_submission(state: InterviewState):
-    user_code = state.get("user_code", "")
+    user_code = state.get("user_code", "").strip()
     language = state.get("language", "python")
     history_array = state.get("chat_history", [])
     
+    lines = [line.strip() for line in user_code.split("\n") if line.strip()]
+    is_boilerplate = False
+    if len(lines) <= 3:
+        last_line = lines[-1] if lines else ""
+        if last_line in ["pass", "return", "return 0", "return []", ""] or last_line.endswith(":"):
+            is_boilerplate = True
+            
+    if is_boilerplate or not user_code:
+        return {
+            "is_passed": False,
+            "score": 0,
+            "metrics": {"time_complexity": "N/A", "space_complexity": "N/A", "code_quality": "N/A"},
+            "feedback": "Submission rejected. You have only provided the starter boilerplate code without any actual algorithmic implementation."
+        }
+
     history_text = "\n".join(history_array[-4:]) if history_array else "No previous history."
     
     prompt = f"""
@@ -101,7 +116,6 @@ def grade_submission(state: InterviewState):
     1. DO NOT penalize for missing input validation
     2. DO NOT penalize for generic function or class names like "solve", "solution", "main", etc.
     3. Focus ONLY on the core algorithmic logic, time complexity, and space complexity.
-    4. IF THE CODE IS EMPTY, CONTAINS ONLY A FUNCTION SIGNATURE, OR JUST SAYS 'pass' OR 'return', YOU MUST SET "is_passed" TO false, "score" TO 0, AND PROVIDE FEEDBACK STATING NO LOGIC WAS IMPLEMENTED.
     
     Context:
     {history_text}
