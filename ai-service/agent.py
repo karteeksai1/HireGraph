@@ -1,13 +1,20 @@
 import os
 import json
+import requests
 from typing import TypedDict, List
 from langgraph.graph import StateGraph, END
 from groq import Groq
+from pinecone import Pinecone
 from dotenv import load_dotenv
 
 load_dotenv()
 
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
+index = pc.Index("hiregraph")
+
+HF_API_KEY = os.environ.get("HF_API_KEY")
+HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
 
 class InterviewState(TypedDict):
     domain: str
@@ -22,46 +29,60 @@ class InterviewState(TypedDict):
     feedback: str
     chat_history: List[dict]
 
+def get_embedding(text: str):
+    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+    response = requests.post(HF_API_URL, headers=headers, json={"inputs": [text]})
+    
+    if response.status_code != 200:
+        raise Exception(f"Hugging Face API failed: {response.text}")
+        
+    return response.json()[0]
+
 def retrieve_question(state: dict):
     domain = state.get("domain", "dsa")
     difficulty = state.get("difficulty", "medium")
-    previous = state.get("previous_topic", "")
-    
-    avoid_clause = f"Do NOT ask about or generate a question related to: {previous}." if previous else ""
-    
-    prompt = f"""
-    You possess an internal database of 100 standard software engineering interview questions for the domain: {domain.upper()}.
-    Select ONE question from this database matching the difficulty level: {difficulty.upper()}.
-    {avoid_clause}
-    
-    Return a strict JSON object with exactly these keys:
-    "question_title": A short name for the question.
-    "question_text": The full problem description.
-    "optimal_time": The target time complexity.
-    "optimal_space": The target space complexity.
-    "optimal_data_structure": The target data structure.
-    "test_cases": An array of exactly 2 JSON objects, each with "input" (string) and "expected_output" (string).
-    "boilerplates": A JSON object containing starter code templates for the keys: "python", "javascript", "java", "cpp", "sql". Example for python: "class Solution:\n    def solve(self, nums):"
-    """
     
     try:
-        response = groq_client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",
-            response_format={"type": "json_object"}
-        )
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        # We grab the exact error from Groq
-        exact_error = f"🚨 BACKEND CRASH: {type(e).__name__} -> {str(e)}"
+        search_query = f"{domain} {difficulty} interview question"
+        query_embedding = get_embedding(search_query)
         
-        # We force it to render on your frontend screen!
+        search_results = index.query(
+            vector=query_embedding,
+            top_k=1,
+            filter={
+                "domain": {"$eq": domain},
+                "difficulty": {"$eq": difficulty}
+            },
+            include_metadata=True
+        )
+        
+        if not search_results.get('matches'):
+            return {
+                "question_title": "Error", 
+                "question_text": "No question found in database.", 
+                "test_cases": [], 
+                "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
+            }
+            
+        match_metadata = search_results['matches'][0]['metadata']
+        
+        return {
+            "question_title": match_metadata.get("title", "Unknown Title"),
+            "question_text": match_metadata.get("text", "No description available."),
+            "optimal_time": match_metadata.get("optimal_time", "N/A"),
+            "optimal_space": match_metadata.get("optimal_space", "N/A"),
+            "test_cases": [], 
+            "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
+        }
+    except Exception as e:
+        exact_error = f"🚨 BACKEND CRASH: {type(e).__name__} -> {str(e)}"
         return {
             "question_title": "System Error", 
             "question_text": exact_error, 
             "test_cases": [], 
             "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
         }
+
 def grade_submission(state: InterviewState):
     user_code = state.get("user_code", "")
     language = state.get("language", "python")
@@ -75,7 +96,7 @@ def grade_submission(state: InterviewState):
     Question: {state.get('question_text')}
     
     CRITICAL GRADING RULES:
-    1. DO NOT penalize for missing input validation (e.g., checking if an array is null, checking isinstance(), or validating data types). Assume inputs passed to the function are always perfectly valid.
+    1. DO NOT penalize for missing input validation
     2. DO NOT penalize for generic function or class names like "solve", "solution", "main", etc.
     3. Focus ONLY on the core algorithmic logic, time complexity, and space complexity.
     
