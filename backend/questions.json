@@ -1,6 +1,285 @@
 [
   {
     "id": "q_001",
+    "domain": "react",
+    "difficulty": "easy",
+    "title": "React Lifecycle and useEffect",
+    "text": "Explain how to replicate componentDidMount, componentDidUpdate, and componentWillUnmount using the useEffect hook.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_002",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Custom Hooks for Window Resizing",
+    "text": "Design a custom hook named useWindowSize that tracks the browser window dimensions dynamically and throttles or debounces the resize event listener.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_003",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Context API vs Redux Tradeoffs",
+    "text": "Analyze the performance implications of using Context API for high-frequency state updates compared to using Redux or Zustand.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_004",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Optimizing Re-renders with useMemo",
+    "text": "Implement a component that filters a large list of 10,000 items based on user input text. Use optimization hooks to ensure filtering calculations do not run on unrelated state updates.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_005",
+    "domain": "react",
+    "difficulty": "easy",
+    "title": "Virtual DOM Mechanics",
+    "text": "Explain the architectural difference between the real DOM and the React Virtual DOM, focusing on how the reconciliation process minimizes layout thrashing.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_006",
+    "domain": "react",
+    "difficulty": "easy",
+    "title": "The Importance of Keys in Lists",
+    "text": "Describe what happens under the hood during the diffing algorithm when an array index is used as the 'key' prop for a dynamically changing list of stateful child components.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_007",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "State Batching Behavior",
+    "text": "Predict the log output and UI state changes when three separate state updater functions are executed synchronously inside an async setTimeOut callback in React 18.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_008",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Error Boundaries Implementation",
+    "text": "Create a class-based Error Boundary component that catches runtime rendering bugs in child components, logs the errors to an external analytics service, and renders a fallback UI.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_009",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Code Splitting with Suspense",
+    "text": "Configure a React application routing setup to lazy-load dashboard views using React.lazy and wrap them cleanly inside a Suspense perimeter with a loading skeleton placeholder.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_010",
+    "domain": "react",
+    "difficulty": "easy",
+    "title": "React Portals for Modals",
+    "text": "Implement a reusable Modal component using React Portals to render the overlay markup completely outside the root application DOM node to bypass parent CSS overflow hidden restraints.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_011",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Design a URL Shortener",
+    "text": "Design a highly available URL shortening service similar to TinyURL. Detail the database choice, key generation strategy, hashing algorithms, and redirection caching mechanisms.",
+    "optimal_time": "O(1) lookup",
+    "optimal_space": "O(N) storage"
+  },
+  {
+    "id": "q_012",
+    "domain": "system_design",
+    "difficulty": "hard",
+    "title": "Design a Real-Time Chat App",
+    "text": "Architect a real-time messaging platform like WhatsApp. Address horizontal scaling of WebSocket connections, handling user presence indicators, and offline message storage delivery queues.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_013",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Design an API Rate Limiter",
+    "text": "Design a distributed API rate limiting layer to protect services from abuse. Evaluate Token Bucket, Leaky Bucket, and Sliding Window Counter approaches using Redis.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(U) users"
+  },
+  {
+    "id": "q_014",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Content Delivery Network Routing",
+    "text": "Explain how edge servers in a CDN reduce latency for static media requests. Describe geographic DNS routing, cache invalidation protocols, and origin shield strategies.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_015",
+    "domain": "system_design",
+    "difficulty": "easy",
+    "title": "Horizontal vs Vertical Scaling",
+    "text": "Compare the operational architectural boundaries of scaling a relational database system vertically via hardware expansion versus scaling horizontally via read replicas and app layer sharding.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_016",
+    "domain": "system_design",
+    "difficulty": "easy",
+    "title": "Load Balancing Strategies",
+    "text": "Analyze the core functional differences between Round Robin, Least Connections, and Consistent Hashing algorithms when configuring a Layer 7 proxy load balancer.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_017",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Database Sharding Architectures",
+    "text": "Explain the mechanics of range-based sharding, directory-based sharding, and hash-based sharding. Detail the technical operational complexities associated with executing cross-shard joins.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_018",
+    "domain": "system_design",
+    "difficulty": "easy",
+    "title": "Cache Eviction Topologies",
+    "text": "Implement a conceptual model explaining the algorithmic performance variances between Least Recently Used (LRU) and Least Frequently Used (LFU) cache replacement processing patterns.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(C) capacity"
+  },
+  {
+    "id": "q_019",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Distributed Notification System",
+    "text": "Architect a massively scalable notification engine capable of delivering millions of push updates, SMS alerts, and emails daily with built-in prioritization mechanics.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_020",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "CAP Theorem System Tradeoffs",
+    "text": "Evaluate the architectural system trade-offs between selecting Consistency over Availability during a network partition event when choosing Apache Cassandra versus an RDBMS deployment.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_021",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Second Highest Salary",
+    "text": "Write an SQL query to report the second highest salary from the Employee table. If there is no second highest salary, the query should report null.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_022",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Nth Highest Salary",
+    "text": "Write a stored SQL function to find the Nth highest salary from an Employee table schema configuration, handling duplicated entry values correctly.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_023",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Department Highest Salary",
+    "text": "Write an SQL query to find employees who have the highest salary in each of the departments. Return the department name, employee name, and salary.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_024",
+    "domain": "sql",
+    "difficulty": "hard",
+    "title": "Consecutive Numbers Tracking",
+    "text": "Write an SQL query to find all numbers that appear at least three times consecutively in a log tracking data table schema view context.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_025",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Employees Earning More Than Managers",
+    "text": "Write an SQL query to find the employees who earn more than their managers. Structure a self-join comparison strategy to output the desired target dataset fields.",
+    "optimal_time": "O(N^2) unindexed",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_026",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Identify Duplicate Emails",
+    "text": "Write an SQL query to report all duplicate emails in a User data directory view. Group matching criteria constraints cleanly to identify row entry anomalies.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_027",
+    "domain": "sql",
+    "difficulty": "hard",
+    "title": "Market Analysis Querying",
+    "text": "Write an SQL query to find for each user, whether the brand of the second item they sold is their favorite brand. If a user has sold less than two items, report no.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_028",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Rank Scores Distribution",
+    "text": "Write an SQL query to rank scores. If there is a tie between two scores, both should have the same ranking. The next ranking number should be the next consecutive integer value.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_029",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Delete Duplicate Records",
+    "text": "Write an SQL DELETE statement to remove all duplicate email rows from a Person table, keeping only the unique entries with the smallest ID primary key values.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_030",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Find Customer Referee",
+    "text": "Write an SQL query to report the names of the customers that are not referred by the customer with an ID value of 2. Pay close attention to handling NULL values.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_031",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Two Sum",
+    "text": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_032",
     "domain": "dsa",
     "difficulty": "medium",
     "title": "Container With Most Water",
@@ -9,11 +288,254 @@
     "optimal_space": "O(1)"
   },
   {
-    "id": "q_002",
+    "id": "q_033",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Median of Two Sorted Arrays",
+    "text": "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays using binary search boundaries optimization.",
+    "optimal_time": "O(log(M+N))",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_034",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Longest Substring Without Repeating Characters",
+    "text": "Given a string s, find the length of the longest substring without repeating characters using the sliding window array tracking technique.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(Min(M, N))"
+  },
+  {
+    "id": "q_035",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Longest Palindromic Substring",
+    "text": "Given a string s, return the longest palindromic substring in s utilizing central expansion validation processing steps.",
+    "optimal_time": "O(N^2)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_036",
     "domain": "dsa",
     "difficulty": "easy",
-    "title": "Two Sum",
-    "text": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+    "title": "Reverse Integer",
+    "text": "Given a signed 32-bit integer x, return x with its digits reversed. If reversing x causes the value to go outside the signed 32-bit integer range, then return 0.",
+    "optimal_time": "O(log(N))",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_037",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Valid Parentheses",
+    "text": "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid using stack structures processing mechanics.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_038",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Merge Two Sorted Lists",
+    "text": "You are given the heads of two sorted linked lists list1 and list2. Merge the two lists into one sorted list by splicing the nodes together dynamically.",
+    "optimal_time": "O(M+N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_039",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Remove Nth Node From End of List",
+    "text": "Given the head of a linked list, remove the nth node from the end of the list and return its head utilizing a fast-and-slow two pointer setup.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_040",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Generate Parentheses",
+    "text": "Given n pairs of parentheses, write a function to generate all combinations of well-formed parentheses utilizing back-tracking programmatic validation trees.",
+    "optimal_time": "O(4^N / sqrt(N))",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_041",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Search in Rotated Sorted Array",
+    "text": "Given a rotated sorted array numbers list, find the target item entry index pointer value using binary search boundaries modification mechanics.",
+    "optimal_time": "O(log(N))",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_042",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Group Anagrams",
+    "text": "Given an array of strings strs, group the anagrams together. You can return the answer in any order using hash map tracking steps.",
+    "optimal_time": "O(N * K log K)",
+    "optimal_space": "O(N * K)"
+  },
+  {
+    "id": "q_043",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Maximum Subarray Sum",
+    "text": "Given an integer array nums, find the contiguous subarray which has the largest sum and return its sum using Kadane's algorithm structure.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_044",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Jump Game",
+    "text": "You are given an integer array nums. You are initially positioned at the array's first index. Determine if you can reach the last index using a greedy checking process.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_045",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Merge Intervals",
+    "text": "Given an array of intervals, merge all overlapping intervals, and return an array of the non-overlapping intervals sorted by entry coordinates.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_046",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Unique Paths",
+    "text": "There is a robot on an m x n grid. The robot can only move either down or right. Find the total unique paths to the bottom right corner using dynamic programming tracking arrays.",
+    "optimal_time": "O(M*N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_047",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Climbing Stairs",
+    "text": "You are climbing a staircase. It takes n steps to reach the top. Each time you can either climb 1 or 2 steps. Find how many distinct ways you can climb to the top.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_048",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Set Matrix Zeroes",
+    "text": "Given an m x n integer matrix, if an element is 0, set its entire row and column to 0's in place using minimal row and col tracking pointers.",
+    "optimal_time": "O(M*N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_049",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Word Search Tracker",
+    "text": "Given an m x n grid of characters board and a string word, return true if word exists in the grid using DFS grid boundary traversal backtracking rules.",
+    "optimal_time": "O(M * N * 3^K)",
+    "optimal_space": "O(K)"
+  },
+  {
+    "id": "q_050",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Decode Ways",
+    "text": "A message containing letters from A-Z can be encoded into numbers using mapping paths. Given a string s containing digits, return the number of ways to decode it.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_051",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Validate Binary Search Tree",
+    "text": "Given the root of a binary tree, determine if it is a valid binary search tree (BST) using node configuration range boundary verification properties.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_052",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Binary Tree Level Order Traversal",
+    "text": "Given the root of a binary tree, return the level order traversal of its nodes' values using a queue tracking structure (BFS traversal template).",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_053",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Construct Binary Tree from Preorder and Inorder Traversal",
+    "text": "Given two integer arrays preorder and inorder, construct and return the binary tree mapping configuration layout arrays processing logic loop steps.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_054",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Best Time to Buy and Sell Stock",
+    "text": "You are given an array prices where prices[i] is the price of a given stock on the ith day. Find the maximum profit you can achieve from this transaction.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_055",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Word Ladder",
+    "text": "Given two words, beginWord and endWord, and a dictionary wordList, return the number of words in the shortest transformation sequence from beginWord to endWord using BFS tracking steps.",
+    "optimal_time": "O(N * M^2)",
+    "optimal_space": "O(N * M)"
+  },
+  {
+    "id": "q_056",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Number of Islands",
+    "text": "Given an m x n 2D binary grid grid which represents a map of '1's (land) and '0's (water), return the number of islands using iterative DFS/BFS island expansion markers.",
+    "optimal_time": "O(M*N)",
+    "optimal_space": "O(M*N)"
+  },
+  {
+    "id": "q_057",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Clone Graph Topology",
+    "text": "Given a reference of a node in a connected undirected graph, return a deep copy (clone) of the graph layout mapping processing elements using a map registry setup.",
+    "optimal_time": "O(N + E)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_058",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Course Schedule Topology Sort",
+    "text": "There are a total of numCourses courses you have to take, labeled from 0 to numCourses - 1. Determine if you can finish all courses using Kahn's topological cycle detection metrics.",
+    "optimal_time": "O(V + E)",
+    "optimal_space": "O(V + E)"
+  },
+  {
+    "id": "q_059",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Coin Change Analysis",
+    "text": "Given an integer array coins representing coins of different denominations and an integer amount representing a total amount of money, find the fewest coins needed using a bottom-up DP array array loop.",
+    "optimal_time": "O(N * A)",
+    "optimal_space": "O(A)"
+  },
+  {
+    "id": "q_060",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Longest Consecutive Sequence",
+    "text": "Given an unsorted array of integers nums, return the length of the longest consecutive elements sequence using hash set cluster head checking strategies.",
     "optimal_time": "O(N)",
     "optimal_space": "O(N)"
   }
