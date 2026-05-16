@@ -41,8 +41,24 @@ def get_embedding(text: str):
     return res
 
 def retrieve_question(state: dict):
-    domain = state.get("domain", "dsa")
-    difficulty = state.get("difficulty", "medium")
+    raw_domain = str(state.get("domain", "dsa")).lower().strip()
+    raw_difficulty = str(state.get("difficulty", "medium")).lower().strip()
+    
+    difficulty = "medium"
+    if "easy" in raw_difficulty:
+        difficulty = "easy"
+    elif "hard" in raw_difficulty:
+        difficulty = "hard"
+        
+    domain = "dsa"
+    if "front" in raw_domain or "react" in raw_domain:
+        domain = "react"
+    elif "system" in raw_domain:
+        domain = "system_design"
+    elif "sql" in raw_domain or "database" in raw_domain:
+        domain = "sql"
+    elif "data" in raw_domain or "dsa" in raw_domain:
+        domain = "dsa"
     
     try:
         search_query = f"{domain} {difficulty} interview question"
@@ -61,7 +77,7 @@ def retrieve_question(state: dict):
         if not search_results.get('matches'):
             return {
                 "question_title": "Error", 
-                "question_text": "No question found in database.", 
+                "question_text": f"No question found matching domain '{domain}' and difficulty '{difficulty}'.", 
                 "test_cases": [], 
                 "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
             }
