@@ -73,7 +73,11 @@ def retrieve_question(state: dict):
             include_metadata=True
         )
         
-        matches = search_results.get('matches', [])
+        if isinstance(search_results, dict):
+            matches = search_results.get('matches', [])
+        else:
+            matches = getattr(search_results, 'matches', [])
+            
         if not matches:
             return {
                 "question_title": "Error", 
@@ -83,7 +87,11 @@ def retrieve_question(state: dict):
             }
             
         match_node = random.choice(matches)
-        match_metadata = match_node['metadata']
+        
+        if isinstance(match_node, dict):
+            match_metadata = match_node.get('metadata', {})
+        else:
+            match_metadata = getattr(match_node, 'metadata', {})
         
         return {
             "question_title": match_metadata.get("title", "Unknown Title"),
