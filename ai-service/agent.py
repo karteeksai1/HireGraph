@@ -101,6 +101,7 @@ def grade_submission(state: InterviewState):
     1. DO NOT penalize for missing input validation
     2. DO NOT penalize for generic function or class names like "solve", "solution", "main", etc.
     3. Focus ONLY on the core algorithmic logic, time complexity, and space complexity.
+    4. IF THE CODE IS EMPTY, CONTAINS ONLY A FUNCTION SIGNATURE, OR JUST SAYS 'pass' OR 'return', YOU MUST SET "is_passed" TO false, "score" TO 0, AND PROVIDE FEEDBACK STATING NO LOGIC WAS IMPLEMENTED.
     
     Context:
     {history_text}
