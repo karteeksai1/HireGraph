@@ -14,7 +14,7 @@ pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("hiregraph")
 
 HF_API_KEY = os.environ.get("HF_API_KEY")
-HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+HF_API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2"
 
 class InterviewState(TypedDict):
     domain: str

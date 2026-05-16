@@ -1,0 +1,20 @@
+[
+  {
+    "id": "q_001",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Container With Most Water",
+    "text": "You are given an integer array height of length n. There are n vertical lines drawn. Return the maximum amount of water a container can store.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_002",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Two Sum",
+    "text": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  }
+]

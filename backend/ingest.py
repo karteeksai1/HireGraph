@@ -1,25 +1,28 @@
 import json
 import os
-import requests
 from pinecone import Pinecone
 from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 
 load_dotenv()
 
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("hiregraph")
 
-HF_API_KEY = os.environ.get("HF_API_KEY")
-HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+hf_client = InferenceClient(token=os.environ.get("HF_API_KEY"))
 
 def get_embedding(text: str):
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    response = requests.post(HF_API_URL, headers=headers, json={"inputs": [text]})
+    response = hf_client.feature_extraction(
+        text, 
+        model="sentence-transformers/all-MiniLM-L6-v2"
+    )
     
-    if response.status_code != 200:
-        raise Exception(f"Hugging Face API failed: {response.text}")
-        
-    return response.json()[0]
+    res = response.tolist() if hasattr(response, "tolist") else response
+    
+    if isinstance(res, list) and len(res) > 0 and isinstance(res[0], list):
+        return res[0]
+    
+    return res
 
 def load_data_to_pinecone():
     with open("questions.json", "r") as f:
@@ -27,6 +30,7 @@ def load_data_to_pinecone():
 
     vectors_to_upsert = []
     for q in questions:
+        print(f"Vectorizing: {q['title']}...")
         text_to_embed = f"{q['title']} - {q['text']}"
         embedding = get_embedding(text_to_embed)
 
@@ -41,6 +45,7 @@ def load_data_to_pinecone():
         vectors_to_upsert.append((q["id"], embedding, metadata))
 
     index.upsert(vectors=vectors_to_upsert)
+    print("Database successfully seeded!")
 
 if __name__ == "__main__":
     load_data_to_pinecone()
