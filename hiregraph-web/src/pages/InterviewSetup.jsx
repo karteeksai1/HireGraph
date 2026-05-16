@@ -54,9 +54,11 @@ export default function InterviewSetup() {
           candidateName
         }
       });
-    } catch (error) {
-      console.error("Failed to start interview");
-      setIsStarting(false);
+    } catch (err) {
+      console.error("Failed to start:", err);
+      alert("Server is waking up or busy. Please wait 1 minute and try again.");
+    } finally {
+      setIsStarting(false); // 2. Unlock the button no matter what happens!
     }
   };
 
