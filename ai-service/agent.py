@@ -1,20 +1,19 @@
 import os
 import json
-import requests
 from typing import TypedDict, List
 from langgraph.graph import StateGraph, END
 from groq import Groq
 from pinecone import Pinecone
 from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 
 load_dotenv()
 
+# Initialize AI and Database Clients
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("hiregraph")
-
-HF_API_KEY = os.environ.get("HF_API_KEY")
-HF_API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2"
+hf_client = InferenceClient(token=os.environ.get("HF_API_KEY"))
 
 class InterviewState(TypedDict):
     domain: str
@@ -30,13 +29,16 @@ class InterviewState(TypedDict):
     chat_history: List[dict]
 
 def get_embedding(text: str):
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    response = requests.post(HF_API_URL, headers=headers, json={"inputs": [text]})
+    # Using the bulletproof InferenceClient instead of manual requests!
+    response = hf_client.feature_extraction(
+        text, 
+        model="sentence-transformers/all-MiniLM-L6-v2"
+    )
     
-    if response.status_code != 200:
-        raise Exception(f"Hugging Face API failed: {response.text}")
-        
-    return response.json()[0]
+    res = response.tolist() if hasattr(response, "tolist") else response
+    if isinstance(res, list) and len(res) > 0 and isinstance(res[0], list):
+        return res[0]
+    return res
 
 def retrieve_question(state: dict):
     domain = state.get("domain", "dsa")

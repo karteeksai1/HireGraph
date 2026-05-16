@@ -4,3 +4,5 @@ groq
 langgraph
 pydantic
 python-dotenv
+pinecone
+huggingface_hub
