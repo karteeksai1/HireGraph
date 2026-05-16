@@ -1,5 +1,7 @@
 import os
 import json
+import requests
+import random
 from typing import TypedDict, List
 from langgraph.graph import StateGraph, END
 from groq import Groq
@@ -9,7 +11,6 @@ from huggingface_hub import InferenceClient
 
 load_dotenv()
 
-# Initialize AI and Database Clients
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("hiregraph")
@@ -29,12 +30,10 @@ class InterviewState(TypedDict):
     chat_history: List[dict]
 
 def get_embedding(text: str):
-    # Using the bulletproof InferenceClient instead of manual requests!
     response = hf_client.feature_extraction(
         text, 
         model="sentence-transformers/all-MiniLM-L6-v2"
     )
-    
     res = response.tolist() if hasattr(response, "tolist") else response
     if isinstance(res, list) and len(res) > 0 and isinstance(res[0], list):
         return res[0]
@@ -66,7 +65,7 @@ def retrieve_question(state: dict):
         
         search_results = index.query(
             vector=query_embedding,
-            top_k=1,
+            top_k=10,
             filter={
                 "domain": {"$eq": domain},
                 "difficulty": {"$eq": difficulty}
@@ -74,7 +73,8 @@ def retrieve_question(state: dict):
             include_metadata=True
         )
         
-        if not search_results.get('matches'):
+        matches = search_results.get('matches', [])
+        if not matches:
             return {
                 "question_title": "Error", 
                 "question_text": f"No question found matching domain '{domain}' and difficulty '{difficulty}'.", 
@@ -82,7 +82,8 @@ def retrieve_question(state: dict):
                 "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
             }
             
-        match_metadata = search_results['matches'][0]['metadata']
+        match_node = random.choice(matches)
+        match_metadata = match_node['metadata']
         
         return {
             "question_title": match_metadata.get("title", "Unknown Title"),
@@ -107,18 +108,23 @@ def grade_submission(state: InterviewState):
     history_array = state.get("chat_history", [])
     
     lines = [line.strip() for line in user_code.split("\n") if line.strip()]
+    
     is_boilerplate = False
     if len(lines) <= 3:
         last_line = lines[-1] if lines else ""
         if last_line in ["pass", "return", "return 0", "return []", ""] or last_line.endswith(":"):
             is_boilerplate = True
             
-    if is_boilerplate or not user_code:
+    is_gibberish = False
+    if len(user_code) < 10 or len(user_code.split()) < 2:
+        is_gibberish = True
+        
+    if is_boilerplate or is_gibberish or not user_code:
         return {
             "is_passed": False,
             "score": 0,
             "metrics": {"time_complexity": "N/A", "space_complexity": "N/A", "code_quality": "N/A"},
-            "feedback": "Submission rejected. You have only provided the starter boilerplate code without any actual algorithmic implementation."
+            "feedback": "Submission rejected. The provided input does not contain a legitimate code implementation or structural logic."
         }
 
     history_text = "\n".join(history_array[-4:]) if history_array else "No previous history."
@@ -132,6 +138,7 @@ def grade_submission(state: InterviewState):
     1. DO NOT penalize for missing input validation
     2. DO NOT penalize for generic function or class names like "solve", "solution", "main", etc.
     3. Focus ONLY on the core algorithmic logic, time complexity, and space complexity.
+    4. ABSOLUTE ZERO TOLERANCE FOR GIBBERISH: If the candidate's code is composed of random letters, nonsense terms, or lacks structural keywords essential to programming syntax, you MUST fail them instantly. Set "is_passed" to false, "score" to 0, and state in the feedback that the submission is invalid text.
     
     Context:
     {history_text}
