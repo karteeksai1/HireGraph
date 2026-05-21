@@ -22,7 +22,6 @@ Follow these steps to clone, configure, and spin up the complete local developme
 
 ## 🏗️ System Architecture
 
-```mermaid
 graph TD
 classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#333;
 classDef express fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#333;
