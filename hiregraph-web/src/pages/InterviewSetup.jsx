@@ -25,6 +25,7 @@ export default function InterviewSetup() {
     if (user && user.name) {
       setCandidateName(user.name);
       setUserId(user.id);
+      axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/ai/warmup`, {}, { timeout: 30000 }).catch(() => {});
     } else {
       navigate('/login');
     }

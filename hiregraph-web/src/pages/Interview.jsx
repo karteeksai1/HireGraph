@@ -158,7 +158,8 @@ export default function Interview() {
         topic,
         domain,
         language,
-        userCode
+        userCode,
+        questionText
       });
       
       setChatHistory(prev => [...prev, { 

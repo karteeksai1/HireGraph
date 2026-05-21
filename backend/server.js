@@ -102,6 +102,7 @@ async function getSessionStats(sessionId) {
         const parsed = parseJsonContent(row.message_content);
         if (parsed?.type === 'evaluation') {
             evaluations.push({
+                topic: parsed.topic || '',
                 score: Number(row.score ?? parsed.adjusted_score ?? parsed.raw_score ?? 0),
                 rawScore: Number(parsed.raw_score ?? row.score ?? 0),
                 adjustedScore: Number(parsed.adjusted_score ?? row.score ?? 0),
@@ -111,6 +112,7 @@ async function getSessionStats(sessionId) {
             });
         } else if (row.score !== null && row.score !== undefined) {
             evaluations.push({
+                topic: parsed?.topic || '',
                 score: Number(row.score || 0),
                 rawScore: Number(row.score || 0),
                 adjustedScore: Number(row.score || 0),
@@ -145,10 +147,10 @@ async function getSessionStats(sessionId) {
 }
 
 function calculatePenalty({ hintCount, attemptNumber, isPassed }) {
-    const hintPenalty = Math.min(hintCount * 3, 15);
-    const retryPenalty = Math.max(0, attemptNumber - 1) * 7;
-    const wrongSubmissionPenalty = isPassed ? 0 : 12;
-    return Math.min(hintPenalty + retryPenalty + wrongSubmissionPenalty, 35);
+    const hintPenalty = Math.min(hintCount, 5);
+    const retryPenalty = Math.min(Math.max(0, attemptNumber - 1) * 3, 6);
+    const wrongSubmissionPenalty = isPassed ? 0 : 5;
+    return Math.min(hintPenalty + retryPenalty + wrongSubmissionPenalty, 12);
 }
 
 app.post('/api/signup', async (req, res) => {
@@ -356,10 +358,11 @@ app.post('/api/interview/run', async (req, res) => {
 });
 
 app.post('/api/interview/submit', async (req, res) => {
-    const { sessionId, topic, domain, language, userCode } = req.body;
+    const { sessionId, topic, domain, language, userCode, questionText } = req.body;
     try {
         const existingStats = await getSessionStats(sessionId);
-        const attemptNumber = existingStats.evaluations.length + 1;
+        const priorTopicAttempts = existingStats.evaluations.filter(evaluation => evaluation.topic === topic).length;
+        const attemptNumber = priorTopicAttempts + 1;
 
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content, submitted_code) VALUES ($1, $2, $3, $4)',
@@ -381,19 +384,25 @@ app.post('/api/interview/submit', async (req, res) => {
         });
 
         const aiResponse = await postAi('/grade', {
-            topic, domain, language, user_code: userCode, chat_history: chatHistory
+            topic,
+            domain,
+            language,
+            user_code: userCode,
+            question_text: questionText || topic,
+            chat_history: chatHistory
         }, { retries: 3, timeout: 180000 });
 
         const { is_passed, score, metrics, feedback } = aiResponse.data;
+        const rawScore = is_passed ? Math.max(Number(score || 0), 75) : Number(score || 0);
         const penalty = calculatePenalty({ hintCount: existingStats.hintCount, attemptNumber, isPassed: is_passed });
-        const adjustedScore = Math.max(0, Math.round(Number(score || 0) - penalty));
+        const adjustedScore = Math.max(0, Math.round(rawScore - penalty));
         const dbContent = JSON.stringify({
             type: 'evaluation',
             topic,
             domain,
             feedback,
             metrics,
-            raw_score: Number(score || 0),
+            raw_score: rawScore,
             adjusted_score: adjustedScore,
             penalty,
             hint_count: existingStats.hintCount,
@@ -405,7 +414,7 @@ app.post('/api/interview/submit', async (req, res) => {
             [sessionId, 'AI', dbContent, is_passed, adjustedScore]
         );
 
-        res.json({ isPassed: is_passed, score: adjustedScore, rawScore: score, penalty, metrics, feedback });
+        res.json({ isPassed: is_passed, score: adjustedScore, rawScore, penalty, metrics, feedback });
     } catch (err) {
         console.error("AI evaluation failed:", err.message);
         res.status(503).json({ error: 'AI is still booting. Please wait and submit again.' });

@@ -204,15 +204,17 @@ def grade_submission(state: InterviewState):
     history_text = "\n".join(history_array[-4:]) if history_array else "No previous history."
     
     prompt = f"""
-    You are a technical interviewer focusing strictly on algorithmic logic and complexity. Evaluate this code.
+    You are a fair technical interviewer focusing on the candidate's core algorithmic idea.
     Language: {language.upper()}
     Question: {state.get('question_text')}
     
     CRITICAL GRADING RULES:
-    1. DO NOT penalize for missing input validation
-    2. DO NOT penalize for generic function or class names like "solve", "solution", "main", etc.
-    3. Focus ONLY on the core algorithmic logic, time complexity, and space complexity.
-    4. ABSOLUTE ZERO TOLERANCE FOR GIBBERISH: If the candidate's code is composed of random letters, nonsense terms, or lacks structural keywords essential to programming syntax, you MUST fail them instantly. Set "is_passed" to false, "score" to 0, and state in the feedback that the submission is invalid text.
+    1. Be generous when the core algorithm is correct. Award 85-100 for an optimal or near-optimal approach even if the wrapper, function signature, input wiring, or variable initialization is incomplete in the editor.
+    2. DO NOT penalize for missing input validation, generic function names, class wrappers, or using prompt variables such as nums, prices, head, root, grid, or s without declaring them.
+    3. Only fail a submission when the core logic is absent, clearly wrong for the prompt, syntactically meaningless, or unrelated to the question.
+    4. If the candidate used the right strategy but has minor syntax/style issues, pass them with constructive feedback and a score above 75.
+    5. Keep feedback brief and encouraging. Mention at most one or two concrete improvements.
+    6. ABSOLUTE ZERO TOLERANCE FOR GIBBERISH: If the candidate's code is random text or lacks any programming structure, fail with score 0.
     
     Context:
     {history_text}

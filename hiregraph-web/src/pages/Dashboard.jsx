@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Constellation from '../components/Constellation';
 
 export default function Dashboard() {
@@ -12,6 +13,11 @@ export default function Dashboard() {
       navigate('/login');
     }
   }, [navigate, storedUser.name]);
+
+  useEffect(() => {
+    if (!storedUser.name) return;
+    axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/ai/warmup`, {}, { timeout: 30000 }).catch(() => {});
+  }, [storedUser.name]);
 
   return (
     <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">

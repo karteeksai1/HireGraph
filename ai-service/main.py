@@ -14,6 +14,7 @@ class GradeRequest(BaseModel):
     domain: str
     language: str
     user_code: str
+    question_text: str = ""
     chat_history: list = []
 
 class QuestionRequest(BaseModel):
@@ -53,7 +54,7 @@ async def evaluate_submission(request: GradeRequest):
         "language": request.language,
         "user_code": request.user_code,
         "chat_history": request.chat_history,
-        "question_text": request.topic 
+        "question_text": request.question_text or request.topic
     }
     result = graph.invoke(initial_state)
     return {
