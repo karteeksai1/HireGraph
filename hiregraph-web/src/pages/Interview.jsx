@@ -30,6 +30,7 @@ export default function Interview() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isFetchingNext, setIsFetchingNext] = useState(false);
+  const [lastScore, setLastScore] = useState(null);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -127,8 +128,11 @@ export default function Interview() {
         sender: 'AI', 
         message: response.data.feedback,
         isPassed: response.data.isPassed,
-        score: response.data.score
+        score: response.data.score,
+        rawScore: response.data.rawScore,
+        penalty: response.data.penalty
       }]);
+      setLastScore(response.data.score);
     } catch {
       setChatHistory(prev => [...prev, { sender: 'AI', message: "Evaluation system offline." }]);
     } finally {
@@ -154,11 +158,12 @@ export default function Interview() {
           setBoilerplates(response.data.boilerplates);
           setTestResults(null);
           setActiveTestCase(0);
-          setQuestionNumber(2);
+          setLastScore(null);
+          setQuestionNumber(prev => prev + 1);
           
           setChatHistory(prev => [...prev, { 
             sender: 'AI', 
-            message: `Phase 2 initiated.\n\nNew Challenge: ${response.data.topic}\n\n${response.data.question}` 
+            message: `Phase ${questionNumber + 1} initiated.\n\nNew Challenge: ${response.data.topic}\n\n${response.data.question}` 
           }]);
 
       } catch {
@@ -205,6 +210,7 @@ export default function Interview() {
                   <div className={`mt-4 p-2 font-mono text-xs border rounded ${msg.isPassed ? 'bg-[#2ea043]/10 text-[#3fb950] border-[#2ea043]/30' : 'bg-[#f85149]/10 text-[#f85149] border-[#f85149]/30'}`}>
                     {msg.isPassed ? 'Verification Passed' : 'Verification Failed'}
                     {msg.score !== undefined && <span className="ml-3">Score: {msg.score}</span>}
+                    {msg.penalty > 0 && <span className="ml-3">Penalty: -{msg.penalty}</span>}
                   </div>
                 )}
               </div>
@@ -268,22 +274,24 @@ export default function Interview() {
               Submit
             </button>
             
-            {questionNumber === 1 ? (
-                <button 
-                  onClick={loadNextQuestion}
-                  disabled={isFetchingNext}
-                  className="px-4 py-1.5 border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] rounded-md font-medium text-xs text-[#9BA3AF] transition-colors ml-4"
-                >
-                  {isFetchingNext ? 'Loading...' : 'Skip / Next'}
-                </button>
-            ) : (
-                <button 
-                  onClick={finishInterview}
-                  className="px-4 py-1.5 border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] rounded-md font-medium text-xs text-[#9BA3AF] transition-colors ml-4"
-                >
-                  Finish
-                </button>
+            {lastScore !== null && (
+              <div className="hidden xl:flex items-center px-3 text-xs font-mono text-[#8B949E]">
+                Last: {lastScore}/100
+              </div>
             )}
+            <button 
+              onClick={loadNextQuestion}
+              disabled={isFetchingNext}
+              className="px-4 py-1.5 border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] rounded-md font-medium text-xs text-[#9BA3AF] transition-colors ml-2"
+            >
+              {isFetchingNext ? 'Loading...' : 'Next'}
+            </button>
+            <button 
+              onClick={finishInterview}
+              className="px-4 py-1.5 border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] rounded-md font-medium text-xs text-[#9BA3AF] transition-colors"
+            >
+              Finish
+            </button>
           </div>
         </div>
         

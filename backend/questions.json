@@ -538,5 +538,725 @@
     "text": "Given an unsorted array of integers nums, return the length of the longest consecutive elements sequence using hash set cluster head checking strategies.",
     "optimal_time": "O(N)",
     "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_061",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Contains Duplicate",
+    "text": "Given an integer array nums, determine whether any value appears at least twice. Return true if a duplicate exists and false otherwise.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_062",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Valid Anagram",
+    "text": "Given two strings s and t, return true if t is an anagram of s and false otherwise.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_063",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Merge Sorted Array",
+    "text": "Merge two sorted integer arrays into the first array in nondecreasing order using the provided buffer space.",
+    "optimal_time": "O(M+N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_064",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Remove Duplicates from Sorted Array",
+    "text": "Given a sorted array nums, remove duplicates in-place so each unique element appears once and return the new length.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_065",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Valid Palindrome",
+    "text": "Given a string, determine whether it is a palindrome after converting uppercase letters to lowercase and removing non-alphanumeric characters.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_066",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Move Zeroes",
+    "text": "Move all zeroes in an array to the end while maintaining the relative order of non-zero elements.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_067",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Intersection of Two Arrays",
+    "text": "Return the unique intersection values between two integer arrays.",
+    "optimal_time": "O(N+M)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_068",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Majority Element",
+    "text": "Given an array with a majority element, return the element that appears more than floor(n / 2) times.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_069",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Linked List Cycle",
+    "text": "Given the head of a linked list, determine whether the list contains a cycle.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_070",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Reverse Linked List",
+    "text": "Reverse a singly linked list and return the new head.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_071",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Maximum Depth of Binary Tree",
+    "text": "Given the root of a binary tree, return its maximum depth.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(H)"
+  },
+  {
+    "id": "q_072",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Invert Binary Tree",
+    "text": "Invert a binary tree by swapping every node’s left and right child.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(H)"
+  },
+  {
+    "id": "q_073",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Binary Search",
+    "text": "Given a sorted integer array and a target, return the target index or -1 if it does not exist.",
+    "optimal_time": "O(log N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_074",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "First Bad Version",
+    "text": "Find the first bad version using the minimum number of calls to an isBadVersion API.",
+    "optimal_time": "O(log N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_075",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Top K Frequent Elements",
+    "text": "Given an integer array nums and integer k, return the k most frequent elements.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_076",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Product of Array Except Self",
+    "text": "Return an array where each position contains the product of all other numbers without using division.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1) extra"
+  },
+  {
+    "id": "q_077",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "3Sum",
+    "text": "Return all unique triplets in an integer array that sum to zero.",
+    "optimal_time": "O(N^2)",
+    "optimal_space": "O(1) extra"
+  },
+  {
+    "id": "q_078",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Subarray Sum Equals K",
+    "text": "Given an integer array and target k, count the number of continuous subarrays whose sum equals k.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_079",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Minimum Window Substring",
+    "text": "Given strings s and t, return the smallest substring of s containing every character from t.",
+    "optimal_time": "O(N+M)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_080",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Find All Anagrams in a String",
+    "text": "Return all starting indices where an anagram of p appears in s.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_081",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Find Minimum in Rotated Sorted Array",
+    "text": "Return the minimum element in a rotated sorted array of unique integers.",
+    "optimal_time": "O(log N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_082",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Koko Eating Bananas",
+    "text": "Find the minimum integer eating speed that lets Koko finish all banana piles within h hours.",
+    "optimal_time": "O(N log M)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_083",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Coin Change",
+    "text": "Given coin denominations and an amount, return the fewest coins needed to make the amount or -1.",
+    "optimal_time": "O(NA)",
+    "optimal_space": "O(A)"
+  },
+  {
+    "id": "q_084",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Longest Increasing Subsequence",
+    "text": "Return the length of the longest strictly increasing subsequence in an integer array.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_085",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Word Break",
+    "text": "Determine whether a string can be segmented into dictionary words.",
+    "optimal_time": "O(N^2)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_086",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Combination Sum",
+    "text": "Return all unique combinations where candidate numbers sum to a target and candidates can be reused.",
+    "optimal_time": "O(2^T)",
+    "optimal_space": "O(T)"
+  },
+  {
+    "id": "q_087",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Permutations",
+    "text": "Return all possible permutations of an array of distinct integers.",
+    "optimal_time": "O(N!)",
+    "optimal_space": "O(N) recursion"
+  },
+  {
+    "id": "q_088",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Lowest Common Ancestor of a Binary Tree",
+    "text": "Given a binary tree and two nodes, return their lowest common ancestor.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(H)"
+  },
+  {
+    "id": "q_089",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Rotting Oranges",
+    "text": "Return the minimum minutes needed for all fresh oranges to rot, or -1 if impossible.",
+    "optimal_time": "O(MN)",
+    "optimal_space": "O(MN)"
+  },
+  {
+    "id": "q_090",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Course Schedule",
+    "text": "Determine whether all courses can be finished given prerequisite pairs.",
+    "optimal_time": "O(V+E)",
+    "optimal_space": "O(V+E)"
+  },
+  {
+    "id": "q_091",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Clone Graph",
+    "text": "Deep copy an undirected connected graph where each node has a value and neighbors.",
+    "optimal_time": "O(V+E)",
+    "optimal_space": "O(V)"
+  },
+  {
+    "id": "q_092",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Insert Interval",
+    "text": "Insert a new interval into a sorted list of non-overlapping intervals and merge if needed.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_093",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Task Scheduler",
+    "text": "Given tasks and cooldown n, return the least number of CPU intervals needed to finish all tasks.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_094",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "LRU Cache",
+    "text": "Design an LRU cache supporting get and put in constant time.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(C)"
+  },
+  {
+    "id": "q_095",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Trapping Rain Water",
+    "text": "Given elevation heights, compute how much rainwater can be trapped after raining.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_096",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Largest Rectangle in Histogram",
+    "text": "Given bar heights, return the area of the largest rectangle in the histogram.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_097",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Sliding Window Maximum",
+    "text": "Return the maximum value in every sliding window of size k.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(K)"
+  },
+  {
+    "id": "q_098",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Serialize and Deserialize Binary Tree",
+    "text": "Design methods to serialize a binary tree to a string and deserialize it back to the same structure.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_099",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Regular Expression Matching",
+    "text": "Implement regex matching with support for . and * over an entire input string.",
+    "optimal_time": "O(MN)",
+    "optimal_space": "O(MN)"
+  },
+  {
+    "id": "q_100",
+    "domain": "react",
+    "difficulty": "easy",
+    "title": "Controlled vs Uncontrolled Inputs",
+    "text": "Explain controlled and uncontrolled form inputs in React and implement a small form that validates an email field.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_101",
+    "domain": "react",
+    "difficulty": "easy",
+    "title": "Conditional Rendering Patterns",
+    "text": "Show multiple ways to conditionally render loading, empty, and populated states in a React component.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_102",
+    "domain": "react",
+    "difficulty": "easy",
+    "title": "Props Drilling Refactor",
+    "text": "Given a component tree with deeply passed props, refactor it using composition or context where appropriate.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_103",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "useReducer Form Workflow",
+    "text": "Build a multi-field form using useReducer and explain when it is preferable to multiple useState calls.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_104",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Debounced Search Component",
+    "text": "Implement a debounced search input that cancels stale requests and avoids rendering outdated results.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_105",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Memoized Expensive List",
+    "text": "Optimize a large React list with memoization and stable callback references.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_106",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Accessible Tabs Component",
+    "text": "Implement an accessible tabs component with keyboard navigation and ARIA attributes.",
+    "optimal_time": "O(T)",
+    "optimal_space": "O(T)"
+  },
+  {
+    "id": "q_107",
+    "domain": "react",
+    "difficulty": "medium",
+    "title": "Optimistic UI Update",
+    "text": "Design an optimistic UI update for toggling a saved item with rollback on server failure.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_108",
+    "domain": "react",
+    "difficulty": "hard",
+    "title": "Virtualized Infinite Feed",
+    "text": "Design a virtualized infinite scrolling feed that preserves scroll position and prevents request races.",
+    "optimal_time": "O(V)",
+    "optimal_space": "O(V)"
+  },
+  {
+    "id": "q_109",
+    "domain": "react",
+    "difficulty": "hard",
+    "title": "Concurrent Rendering Pitfalls",
+    "text": "Explain how concurrent rendering can expose stale closure bugs and how to design components defensively.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_110",
+    "domain": "system_design",
+    "difficulty": "easy",
+    "title": "Design a Pastebin Service",
+    "text": "Design a simple paste sharing service with expiration, storage, and read-heavy access patterns.",
+    "optimal_time": "O(1) lookup",
+    "optimal_space": "O(N) storage"
+  },
+  {
+    "id": "q_111",
+    "domain": "system_design",
+    "difficulty": "easy",
+    "title": "Design a Feature Flag Service",
+    "text": "Design a feature flag evaluation service for web and mobile clients with low-latency reads.",
+    "optimal_time": "O(1)",
+    "optimal_space": "O(F)"
+  },
+  {
+    "id": "q_112",
+    "domain": "system_design",
+    "difficulty": "easy",
+    "title": "Design a File Upload Service",
+    "text": "Design a service for uploading and serving user files with metadata, object storage, and virus scanning.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_113",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Design a News Feed",
+    "text": "Design a social news feed with fan-out strategies, ranking, pagination, and cache invalidation.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_114",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Design a Metrics Pipeline",
+    "text": "Design a metrics ingestion pipeline that supports high write volume, aggregation, and dashboard queries.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_115",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Design a Ticket Booking System",
+    "text": "Design a ticket booking system that prevents double booking during high-concurrency checkout.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_116",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Design a Search Autocomplete Service",
+    "text": "Design autocomplete for prefix search with ranking, freshness, and typo tolerance.",
+    "optimal_time": "O(prefix)",
+    "optimal_space": "O(dictionary)"
+  },
+  {
+    "id": "q_117",
+    "domain": "system_design",
+    "difficulty": "medium",
+    "title": "Design an Audit Log System",
+    "text": "Design append-only audit logging with retention, search, tamper resistance, and compliance exports.",
+    "optimal_time": "O(1) write",
+    "optimal_space": "O(N) storage"
+  },
+  {
+    "id": "q_118",
+    "domain": "system_design",
+    "difficulty": "hard",
+    "title": "Design a Video Streaming Platform",
+    "text": "Design video upload, transcoding, CDN distribution, playback manifests, and analytics at scale.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_119",
+    "domain": "system_design",
+    "difficulty": "hard",
+    "title": "Design a Multi-Region Database Strategy",
+    "text": "Design active-active or active-passive data replication across regions with failover and conflict handling.",
+    "optimal_time": "N/A",
+    "optimal_space": "N/A"
+  },
+  {
+    "id": "q_120",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Customers With No Orders",
+    "text": "Write a SQL query to find customers who have never placed an order.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_121",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Rising Temperature",
+    "text": "Write a SQL query to find dates where the temperature is higher than the previous day.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_122",
+    "domain": "sql",
+    "difficulty": "easy",
+    "title": "Class More Than Five Students",
+    "text": "Write a SQL query to list classes that have at least five students.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_123",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Monthly Revenue by Product",
+    "text": "Write a SQL query to calculate monthly revenue per product from orders and order_items tables.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_124",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Rolling 7 Day Average",
+    "text": "Write a SQL query to compute a rolling 7-day average of daily active users.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_125",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Users With Consecutive Logins",
+    "text": "Find users who logged in for at least three consecutive days.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_126",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Latest Status Per Entity",
+    "text": "Return the latest status row for each entity from an event history table.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_127",
+    "domain": "sql",
+    "difficulty": "medium",
+    "title": "Cohort Retention Query",
+    "text": "Write a SQL query that computes week-one retention by signup cohort.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_128",
+    "domain": "sql",
+    "difficulty": "hard",
+    "title": "Recursive Org Chart",
+    "text": "Use a recursive CTE to return all reports under a given manager.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_129",
+    "domain": "sql",
+    "difficulty": "hard",
+    "title": "Sessionize Clickstream Events",
+    "text": "Group clickstream events into sessions using a 30-minute inactivity threshold.",
+    "optimal_time": "O(N log N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_130",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Same Tree",
+    "text": "Given two binary tree roots, determine whether the trees are structurally identical and have the same node values.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(H)"
+  },
+  {
+    "id": "q_131",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Symmetric Tree",
+    "text": "Given a binary tree root, determine whether it is a mirror of itself.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(H)"
+  },
+  {
+    "id": "q_132",
+    "domain": "dsa",
+    "difficulty": "easy",
+    "title": "Missing Number",
+    "text": "Given an array containing n distinct numbers from 0 to n, return the missing number.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1)"
+  },
+  {
+    "id": "q_133",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Pacific Atlantic Water Flow",
+    "text": "Return grid coordinates where water can flow to both the Pacific and Atlantic oceans.",
+    "optimal_time": "O(MN)",
+    "optimal_space": "O(MN)"
+  },
+  {
+    "id": "q_134",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Accounts Merge",
+    "text": "Merge user accounts that share common email addresses and return grouped account records.",
+    "optimal_time": "O(E alpha E)",
+    "optimal_space": "O(E)"
+  },
+  {
+    "id": "q_135",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Decode String",
+    "text": "Decode an encoded string with nested repetition patterns like 3[a2[c]].",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_136",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Daily Temperatures",
+    "text": "For each day, return how many days must pass until a warmer temperature occurs.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(N)"
+  },
+  {
+    "id": "q_137",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Kth Largest Element in an Array",
+    "text": "Find the kth largest element in an unsorted array without fully sorting when possible.",
+    "optimal_time": "O(N)",
+    "optimal_space": "O(1) average"
+  },
+  {
+    "id": "q_138",
+    "domain": "dsa",
+    "difficulty": "medium",
+    "title": "Find K Closest Elements",
+    "text": "Return the k closest values to x from a sorted array.",
+    "optimal_time": "O(log N + K)",
+    "optimal_space": "O(K)"
+  },
+  {
+    "id": "q_139",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Alien Dictionary",
+    "text": "Given a sorted list of words in an alien language, derive a valid character ordering.",
+    "optimal_time": "O(C)",
+    "optimal_space": "O(1) alphabet"
+  },
+  {
+    "id": "q_140",
+    "domain": "dsa",
+    "difficulty": "hard",
+    "title": "Minimum Cost to Connect Points",
+    "text": "Connect all given points with minimum total Manhattan distance using a graph algorithm.",
+    "optimal_time": "O(N^2 log N)",
+    "optimal_space": "O(N^2)"
   }
 ]

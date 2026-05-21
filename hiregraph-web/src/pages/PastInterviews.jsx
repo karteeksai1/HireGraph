@@ -103,15 +103,20 @@ export default function PastInterviews() {
                   
                   <div className="flex justify-between items-end">
                     <div className="text-xs font-mono text-[#8B949E]">ID: {session.id ? session.id.toString().substring(0,8) : 'N/A'}</div>
-                    <div className="font-medium">
+                    <div className="font-medium text-right">
                       {session.status === 'completed' ? (
+                        <div className="flex flex-col items-end gap-2">
                         <span className={`px-2 py-1 rounded text-xs border ${
                           session.final_score >= 80 ? 'bg-[#2ea043]/10 text-[#3fb950] border-[#2ea043]/30' : 
                           session.final_score >= 50 ? 'bg-[#d29922]/10 text-[#d29922] border-[#d29922]/30' : 
                           'bg-[#f85149]/10 text-[#f85149] border-[#f85149]/30'
                         }`}>
-                          Score: {session.final_score || 0}/100
+                          Avg: {session.avg_score || session.final_score || 0}/100
                         </span>
+                        <span className="text-[11px] text-[#8B949E] font-mono">
+                          {session.questions_answered || 0} question{Number(session.questions_answered) === 1 ? '' : 's'}
+                        </span>
+                        </div>
                       ) : (
                         <span className="bg-[#21262d] text-[#8B949E] border border-[#30363d] px-2 py-1 rounded text-xs">
                           In Progress

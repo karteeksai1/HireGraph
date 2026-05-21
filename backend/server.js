@@ -3,6 +3,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const axios = require('axios');
 const bcrypt = require('bcrypt');
+const { formatQuestionMessage, normalizeDifficulty, normalizeDomain, pickQuestion } = require('./questionBank');
 require('dotenv').config();
 
 const app = express();
@@ -27,6 +28,90 @@ const pool = new Pool({
 });
 
 const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
+
+function parseJsonContent(content) {
+    if (!content) return null;
+    try {
+        return JSON.parse(content);
+    } catch {
+        return null;
+    }
+}
+
+async function getAskedQuestionTitles(sessionId) {
+    const result = await pool.query(
+        'SELECT message_content FROM interview_messages WHERE session_id = $1 AND sender_type = $2 ORDER BY id ASC',
+        [sessionId, 'AI']
+    );
+
+    return result.rows
+        .map(row => parseJsonContent(row.message_content))
+        .filter(content => content?.type === 'question')
+        .map(content => content.title);
+}
+
+async function getSessionStats(sessionId) {
+    const result = await pool.query(
+        'SELECT sender_type, message_content, score FROM interview_messages WHERE session_id = $1 ORDER BY id ASC',
+        [sessionId]
+    );
+
+    const evaluations = [];
+    let hintCount = 0;
+
+    for (const row of result.rows) {
+        const parsed = parseJsonContent(row.message_content);
+        if (parsed?.type === 'evaluation') {
+            evaluations.push({
+                score: Number(row.score ?? parsed.adjusted_score ?? parsed.raw_score ?? 0),
+                rawScore: Number(parsed.raw_score ?? row.score ?? 0),
+                adjustedScore: Number(parsed.adjusted_score ?? row.score ?? 0),
+                penalty: Number(parsed.penalty ?? 0),
+                metrics: parsed.metrics || {},
+                feedback: parsed.feedback || ''
+            });
+        } else if (row.score !== null && row.score !== undefined) {
+            evaluations.push({
+                score: Number(row.score || 0),
+                rawScore: Number(row.score || 0),
+                adjustedScore: Number(row.score || 0),
+                penalty: 0,
+                metrics: parsed?.metrics || {},
+                feedback: parsed?.feedback || row.message_content || ''
+            });
+        }
+        if (parsed?.type === 'hint') {
+            hintCount += 1;
+        }
+    }
+
+    const avgScore = evaluations.length
+        ? Math.round(evaluations.reduce((sum, evaluation) => sum + evaluation.adjustedScore, 0) / evaluations.length)
+        : 0;
+    const avgRawScore = evaluations.length
+        ? Math.round(evaluations.reduce((sum, evaluation) => sum + evaluation.rawScore, 0) / evaluations.length)
+        : 0;
+    const totalPenalty = evaluations.reduce((sum, evaluation) => sum + evaluation.penalty, 0);
+    const lastEvaluation = evaluations[evaluations.length - 1] || null;
+
+    return {
+        avgScore,
+        avgRawScore,
+        totalPenalty,
+        hintCount,
+        evaluations,
+        lastEvaluation,
+        questionsAnswered: evaluations.length
+    };
+}
+
+function calculatePenalty({ hintCount, attemptNumber, isPassed }) {
+    const hintPenalty = Math.min(hintCount * 3, 15);
+    const retryPenalty = Math.max(0, attemptNumber - 1) * 7;
+    const wrongSubmissionPenalty = isPassed ? 0 : 12;
+    return Math.min(hintPenalty + retryPenalty + wrongSubmissionPenalty, 35);
+}
+
 app.post('/api/signup', async (req, res) => {
     const { name, email, password } = req.body;
     try {
@@ -101,47 +186,64 @@ app.post('/api/auth/google', async (req, res) => {
 });
 
 app.post('/api/interview/start', async (req, res) => {
-    const { userId, candidateName, domain, difficulty } = req.body;
+    const { userId, domain, difficulty } = req.body;
     try {
-        const aiResponse = await axios.post(`${AI_URL}/question`, { domain, difficulty });
-        const { question_title, question_text, test_cases, boilerplates } = aiResponse.data;
+        const question = pickQuestion({ domain, difficulty });
 
         const newSession = await pool.query(
             'INSERT INTO interview_sessions (user_id, topic, start_time, status) VALUES ($1, $2, NOW(), $3) RETURNING id',
-            [userId, question_title || domain, 'in_progress']
+            [userId, `${normalizeDomain(domain)} ${normalizeDifficulty(difficulty)}`, 'in_progress']
+        );
+
+        await pool.query(
+            'INSERT INTO interview_messages (session_id, sender_type, message_content) VALUES ($1, $2, $3)',
+            [newSession.rows[0].id, 'AI', JSON.stringify({
+                type: 'question',
+                phase: 1,
+                title: question.question_title,
+                text: question.question_text,
+                optimal_time: question.optimal_time,
+                optimal_space: question.optimal_space
+            })]
         );
         
         res.json({ 
             sessionId: newSession.rows[0].id,
-            topic: question_title || domain,
-            question: question_text,
-            testCases: test_cases,
-            boilerplates: boilerplates
+            topic: question.question_title,
+            question: question.question_text,
+            testCases: question.test_cases,
+            boilerplates: question.boilerplates
         });
     } catch (err) {
-        console.error("🔥🔥🔥 CRASH IN /api/interview/start:", err); // THIS IS THE MAGIC LINE
+        console.error("Interview start error:", err);
         res.status(500).json({ error: 'Failed to start interview' });
     }
 });
 
 app.post('/api/interview/next', async (req, res) => {
-    const { sessionId, domain, difficulty, previousTopic } = req.body;
+    const { sessionId, domain, difficulty } = req.body;
     try {
-        const aiResponse = await axios.post(`${AI_URL}/question`, { 
-            domain, difficulty, previous_topic: previousTopic 
-        });
-        const { question_title, question_text, test_cases, boilerplates } = aiResponse.data;
+        const previousTitles = await getAskedQuestionTitles(sessionId);
+        const question = pickQuestion({ domain, difficulty, excludeTitles: previousTitles });
+        const phase = previousTitles.length + 1;
 
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content) VALUES ($1, $2, $3)',
-            [sessionId, 'AI', `Phase 2 initiated.\n\nNew Challenge: ${question_title}\n\n${question_text}`]
+            [sessionId, 'AI', JSON.stringify({
+                type: 'question',
+                phase,
+                title: question.question_title,
+                text: question.question_text,
+                optimal_time: question.optimal_time,
+                optimal_space: question.optimal_space
+            })]
         );
 
         res.json({
-            topic: question_title || domain,
-            question: question_text,
-            testCases: test_cases,
-            boilerplates: boilerplates
+            topic: question.question_title,
+            question: question.question_text,
+            testCases: question.test_cases,
+            boilerplates: question.boilerplates
         });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch next question' });
@@ -151,9 +253,12 @@ app.post('/api/interview/next', async (req, res) => {
 app.post('/api/interview/chat', async (req, res) => {
     const { sessionId, domain, message, questionText } = req.body;
     try {
+        const lowerMessage = String(message).toLowerCase();
+        const isHintRequest = lowerMessage.includes('hint') || lowerMessage.includes('stuck') || lowerMessage.includes('help') || lowerMessage.includes('approach');
+
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content) VALUES ($1, $2, $3)',
-            [sessionId, 'USER', message]
+            [sessionId, 'USER', JSON.stringify({ type: isHintRequest ? 'hint' : 'chat', content: message })]
         );
 
         const historyQuery = await pool.query(
@@ -161,7 +266,13 @@ app.post('/api/interview/chat', async (req, res) => {
             [sessionId]
         );
         
-        const chatHistory = historyQuery.rows.map(row => `${row.sender_type}: ${row.message_content}`);
+        const chatHistory = historyQuery.rows.map(row => {
+            const parsed = parseJsonContent(row.message_content);
+            if (parsed?.type === 'question') return `Interviewer: ${formatQuestionMessage(parsed.phase, { title: parsed.title, text: parsed.text })}`;
+            if (parsed?.type === 'evaluation') return `Interviewer: ${parsed.feedback}`;
+            if (parsed?.content) return `${row.sender_type}: ${parsed.content}`;
+            return `${row.sender_type}: ${row.message_content}`;
+        });
 
         const aiResponse = await axios.post(`${AI_URL}/chat`, {
             domain,
@@ -172,10 +283,11 @@ app.post('/api/interview/chat', async (req, res) => {
 
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content) VALUES ($1, $2, $3)',
-            [sessionId, 'AI', aiResponse.data.reply]
+            [sessionId, 'AI', JSON.stringify({ type: 'chat', content: aiResponse.data.reply })]
         );
 
-        res.json({ reply: aiResponse.data.reply });
+        const stats = await getSessionStats(sessionId);
+        res.json({ reply: aiResponse.data.reply, hintCount: stats.hintCount });
     } catch (err) {
         res.status(500).json({ error: 'Chat failed' });
     }
@@ -196,9 +308,12 @@ app.post('/api/interview/run', async (req, res) => {
 app.post('/api/interview/submit', async (req, res) => {
     const { sessionId, topic, domain, language, userCode } = req.body;
     try {
+        const existingStats = await getSessionStats(sessionId);
+        const attemptNumber = existingStats.evaluations.length + 1;
+
         await pool.query(
-            'INSERT INTO interview_messages (session_id, sender_type, submitted_code) VALUES ($1, $2, $3)',
-            [sessionId, 'USER', userCode]
+            'INSERT INTO interview_messages (session_id, sender_type, message_content, submitted_code) VALUES ($1, $2, $3, $4)',
+            [sessionId, 'USER', JSON.stringify({ type: 'submission', topic, attempt: attemptNumber }), userCode]
         );
 
         const historyQuery = await pool.query(
@@ -207,9 +322,12 @@ app.post('/api/interview/submit', async (req, res) => {
         );
         
         const chatHistory = historyQuery.rows.map(row => {
-            if (row.sender_type === 'USER') return `Candidate: ${row.submitted_code || row.message_content}`;
-            try { return `Interviewer: ${JSON.parse(row.message_content).feedback}`; } 
-            catch(e) { return `Interviewer: ${row.message_content}`; }
+            const parsed = parseJsonContent(row.message_content);
+            if (row.sender_type === 'USER') return `Candidate: ${row.submitted_code || parsed?.content || row.message_content}`;
+            if (parsed?.type === 'question') return `Interviewer: ${formatQuestionMessage(parsed.phase, { title: parsed.title, text: parsed.text })}`;
+            if (parsed?.type === 'evaluation') return `Interviewer: ${parsed.feedback}`;
+            if (parsed?.content) return `Interviewer: ${parsed.content}`;
+            return `Interviewer: ${row.message_content}`;
         });
 
         const aiResponse = await axios.post(`${AI_URL}/grade`, {
@@ -217,14 +335,27 @@ app.post('/api/interview/submit', async (req, res) => {
         });
 
         const { is_passed, score, metrics, feedback } = aiResponse.data;
-        const dbContent = JSON.stringify({ feedback, metrics });
+        const penalty = calculatePenalty({ hintCount: existingStats.hintCount, attemptNumber, isPassed: is_passed });
+        const adjustedScore = Math.max(0, Math.round(Number(score || 0) - penalty));
+        const dbContent = JSON.stringify({
+            type: 'evaluation',
+            topic,
+            domain,
+            feedback,
+            metrics,
+            raw_score: Number(score || 0),
+            adjusted_score: adjustedScore,
+            penalty,
+            hint_count: existingStats.hintCount,
+            attempt: attemptNumber
+        });
 
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content, is_passed, score) VALUES ($1, $2, $3, $4, $5)',
-            [sessionId, 'AI', dbContent, is_passed, score]
+            [sessionId, 'AI', dbContent, is_passed, adjustedScore]
         );
 
-        res.json({ isPassed: is_passed, score, metrics, feedback });
+        res.json({ isPassed: is_passed, score: adjustedScore, rawScore: score, penalty, metrics, feedback });
     } catch (err) {
         res.status(500).json({ error: 'AI Evaluation Failed' });
     }
@@ -233,13 +364,8 @@ app.post('/api/interview/submit', async (req, res) => {
 app.post('/api/interview/finish', async (req, res) => {
     try {
         const { sessionId } = req.body;
-        const scoreQuery = await pool.query(
-            'SELECT AVG(score) as avg_score FROM interview_messages WHERE session_id = $1 AND score IS NOT NULL AND score > 0',
-            [sessionId]
-        );
-        
-        const rawScore = scoreQuery.rows[0].avg_score || 0;
-        const finalScore = Math.round(rawScore);
+        const stats = await getSessionStats(sessionId);
+        const finalScore = stats.avgScore;
 
         await pool.query(
             "UPDATE interview_sessions SET status = 'completed', final_score = $1 WHERE id = $2",
@@ -255,7 +381,12 @@ app.get('/api/sessions/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         const sessions = await pool.query(
-            'SELECT * FROM interview_sessions WHERE user_id = $1 ORDER BY start_time DESC',
+            `SELECT s.*, COUNT(m.score) AS questions_answered, COALESCE(ROUND(AVG(m.score)), 0) AS avg_score
+             FROM interview_sessions s
+             LEFT JOIN interview_messages m ON m.session_id = s.id AND m.score IS NOT NULL
+             WHERE s.user_id = $1
+             GROUP BY s.id
+             ORDER BY s.start_time DESC`,
             [userId]
         );
         res.json(sessions.rows);
@@ -270,7 +401,8 @@ app.get('/api/sessions/details/:sessionId', async (req, res) => {
         const sessionQuery = await pool.query('SELECT * FROM interview_sessions WHERE id = $1', [sessionId]);
         const messagesQuery = await pool.query('SELECT * FROM interview_messages WHERE session_id = $1 ORDER BY id ASC', [sessionId]);
         if (sessionQuery.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
-        res.json({ session: sessionQuery.rows[0], messages: messagesQuery.rows });
+        const stats = await getSessionStats(sessionId);
+        res.json({ session: sessionQuery.rows[0], messages: messagesQuery.rows, stats });
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch details' });
     }

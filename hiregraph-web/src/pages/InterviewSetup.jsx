@@ -66,20 +66,20 @@ export default function InterviewSetup() {
     <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">
       <Constellation />
       
-      <div className="relative z-10 flex-1 flex flex-col max-w-4xl mx-auto w-full p-8">
-        <header className="flex justify-between items-center mb-12 border-b border-[#30363d] pb-6">
+      <div className="relative z-10 flex-1 flex flex-col max-w-5xl mx-auto w-full px-6 py-8">
+        <header className="flex justify-between items-center mb-8 border-b border-[#30363d] pb-5">
           <button onClick={() => navigate('/dashboard')} className="text-sm text-[#9BA3AF] hover:text-[#E6EDF3] transition-colors">
             ← Back
           </button>
           <h1 className="text-sm font-medium text-[#8B949E] tracking-widest uppercase">Configuration</h1>
         </header>
 
-        <main className="flex-1 flex flex-col w-full mx-auto">
+        <main className="flex-1 flex flex-col justify-center w-full mx-auto">
           <div className="mb-10">
-            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-rrom-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
+            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-r from-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
               Session Parameters
             </h2>
-            <p className="text-[#8B949E] text-sm font-light">Configure domain and difficulty level.</p>
+            <p className="text-[#8B949E] text-sm font-light">Choose a local question instantly, then use AI for hints and scoring.</p>
           </div>
 
           <div className="space-y-8 bg-[#161b22] p-8 rounded-xl border border-[#30363d]">
@@ -126,7 +126,7 @@ export default function InterviewSetup() {
             </div>
           </div>
 
-          <div className="mt-8 text-right">
+          <div className="mt-8 flex justify-end">
             <button
               onClick={startInterview}
               disabled={!domain || !difficulty || isStarting}

@@ -46,43 +46,52 @@ export default function Scorecard() {
     );
   }
 
-  const finalAiMessage = [...data.messages].reverse().find(msg => msg.sender_type === 'AI');
-  let parsedContent = { feedback: "No specific feedback recorded for this session.", metrics: {} };
-  
-  if (finalAiMessage && finalAiMessage.message_content) {
-    try {
-      parsedContent = JSON.parse(finalAiMessage.message_content);
-    } catch {
-      parsedContent.feedback = finalAiMessage.message_content; 
-    }
-  }
-
-  const metrics = parsedContent.metrics || {};
-  const finalScore = data.session.final_score || 0;
+  const stats = data.stats || {};
+  const evaluations = stats.evaluations || [];
+  const lastEvaluation = stats.lastEvaluation || evaluations[evaluations.length - 1] || {};
+  const finalScore = stats.avgScore || data.session.final_score || 0;
+  const questions = data.messages
+    .map(msg => {
+      try {
+        const parsed = JSON.parse(msg.message_content);
+        return parsed?.type === 'question' ? parsed : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+  const latestQuestion = questions[questions.length - 1] || {};
+  const metrics = {
+    ...(lastEvaluation.metrics || {}),
+    time_complexity: lastEvaluation.metrics?.time_complexity || latestQuestion.optimal_time || 'N/A',
+    space_complexity: lastEvaluation.metrics?.space_complexity || latestQuestion.optimal_space || 'N/A'
+  };
 
   return (
     <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">
       <Constellation />
       
-      <div className="relative z-10 flex-1 flex flex-col max-w-4xl mx-auto w-full p-8">
-        <header className="flex justify-between items-center mb-10 border-b border-[#30363d] pb-6">
+      <div className="relative z-10 flex-1 flex flex-col max-w-5xl mx-auto w-full px-6 py-8">
+        <header className="flex justify-between items-center mb-8 border-b border-[#30363d] pb-5">
           <button onClick={() => navigate('/past-interviews')} className="text-sm text-[#9BA3AF] hover:text-[#E6EDF3] transition-colors">
             ← Back to Archive
           </button>
           <div className="text-sm font-medium text-[#8B949E]">Evaluation Report</div>
         </header>
         
-        <div className="bg-[#161b22] rounded-xl p-8 border border-[#30363d] shadow-sm">
+        <div className="bg-[#161b22] rounded-xl p-6 md:p-8 border border-[#30363d] shadow-sm">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-[#30363d] pb-8">
             <div>
-              <div className="text-xs text-[#8B949E] mb-1 font-medium">Challenge Domain</div>
-              <h1 className="text-2xl font-semibold text-[#E6EDF3] mb-1">{data.session.topic}</h1>
+              <div className="text-xs text-[#8B949E] mb-1 font-medium">Interview Summary</div>
+              <h1 className="text-2xl font-semibold text-[#E6EDF3] mb-1">
+                {questions.length} Question Session
+              </h1>
               <p className="text-[#8B949E] text-xs">
                 {new Date(data.session.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
             <div className="mt-6 md:mt-0 text-right">
-              <div className="text-xs text-[#8B949E] mb-1 font-medium">Final Assessment</div>
+              <div className="text-xs text-[#8B949E] mb-1 font-medium">Average Assessment</div>
               <div className={`text-5xl font-semibold ${finalScore >= 80 ? 'text-[#3fb950]' : finalScore >= 50 ? 'text-[#d29922]' : 'text-[#f85149]'}`}>
                 {finalScore}<span className="text-lg text-[#8B949E]">/100</span>
               </div>
@@ -100,24 +109,57 @@ export default function Scorecard() {
           </div>
 
           <h2 className="text-xs text-[#8B949E] font-medium mb-3">Performance Telemetry</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
-              <div className="text-xs text-[#8B949E] mb-1">Time Complexity</div>
+              <div className="text-xs text-[#8B949E] mb-1">Latest Time Complexity</div>
               <div className="font-mono text-base text-[#D1D5DB]">{metrics.time_complexity || 'N/A'}</div>
             </div>
             <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
-              <div className="text-xs text-[#8B949E] mb-1">Space Complexity</div>
+              <div className="text-xs text-[#8B949E] mb-1">Latest Space Complexity</div>
               <div className="font-mono text-base text-[#D1D5DB]">{metrics.space_complexity || 'N/A'}</div>
             </div>
             <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
-              <div className="text-xs text-[#8B949E] mb-1">Code Quality</div>
+              <div className="text-xs text-[#8B949E] mb-1">Score Adjustment</div>
+              <div className="font-medium text-base text-[#D1D5DB]">-{stats.totalPenalty || 0}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+              <div className="text-xs text-[#8B949E] mb-1">Questions Answered</div>
+              <div className="font-mono text-base text-[#D1D5DB]">{stats.questionsAnswered || evaluations.length}</div>
+            </div>
+            <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+              <div className="text-xs text-[#8B949E] mb-1">Raw Average</div>
+              <div className="font-mono text-base text-[#D1D5DB]">{stats.avgRawScore || 0}/100</div>
+            </div>
+            <div className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+              <div className="text-xs text-[#8B949E] mb-1">Latest Code Quality</div>
               <div className="font-medium text-base text-[#D1D5DB]">{metrics.code_quality || 'N/A'}</div>
             </div>
           </div>
 
-          <h2 className="text-xs text-[#8B949E] font-medium mb-3">System Analysis</h2>
+          <h2 className="text-xs text-[#8B949E] font-medium mb-3">Question Breakdown</h2>
+          <div className="space-y-3 mb-8">
+            {questions.map((question, index) => {
+              const evaluation = evaluations[index] || {};
+              return (
+                <div key={`${question.title}-${index}`} className="bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
+                    <div className="text-sm font-medium text-[#D1D5DB]">{index + 1}. {question.title}</div>
+                    <div className="text-xs font-mono text-[#8B949E]">
+                      {evaluation.adjustedScore ?? evaluation.score ?? 'N/A'}/100
+                    </div>
+                  </div>
+                  <div className="text-xs text-[#8B949E] leading-relaxed">{question.text}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <h2 className="text-xs text-[#8B949E] font-medium mb-3">Latest System Analysis</h2>
           <div className="bg-[#0d1117] p-6 rounded-lg border border-[#30363d] text-[#9BA3AF] leading-relaxed text-sm font-light whitespace-pre-wrap">
-            {parsedContent.feedback}
+            {lastEvaluation.feedback || "No specific feedback recorded for this session."}
           </div>
         </div>
       </div>
