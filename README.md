@@ -24,48 +24,23 @@ Follow these steps to clone, configure, and spin up the complete local developme
 
 ```mermaid
 graph TD
-classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#333;
-classDef express fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#333;
-classDef fastapi fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#333;
-classDef db fill:#eceff1,stroke:#263238,stroke-width:2px,color:#333;
-classDef external fill:#f5f5f5,stroke:#9e9e9e,stroke-width:1px,stroke-dasharray: 5 5,color:#333;
 
 User[User / Candidate]
 
-subgraph Client_Tier [Client Tier]
-    React[React Frontend<br/>UI & WebSocket Client]:::client
-end
+React[React Frontend]
+Express[Express Backend]
+FastAPI[FastAPI]
+LangGraph[LangGraph]
+RAG[RAG Layer]
+Postgres[(PostgreSQL + pgvector)]
+OpenAI[OpenAI GPT-4o API]
 
-subgraph Backend_Tier [Backend Tier]
-    Express[Express Backend<br/>Node.js/TS<br/>Auth & Sessions]:::express
-
-    subgraph AI_Engine [AI Orchestration Engine]
-        FastAPI[FastAPI<br/>Python]:::fastapi
-        LangGraph[LangGraph<br/>Agent State Machine]:::fastapi
-        RAG[RAG Evaluation Layer]:::fastapi
-
-        FastAPI --> LangGraph
-        LangGraph --> RAG
-    end
-end
-
-subgraph Data_Tier [Data Tier]
-    Postgres[(PostgreSQL<br/>with pgvector)]:::db
-end
-
-OpenAI[OpenAI GPT-4o API]:::external
-
-User <==>|Interacts| React
-
-React -- "HTTP REST (Auth/Data)" --> Express
-React -- "WebSockets/REST (Interviewer Loop)" --> FastAPI
-
-Express -- "CRUD Operations" --> Postgres
-
-RAG -- "Semantic Query<br/>(Grading Rubrics)" --> Postgres
-LangGraph <==>|Model Calls| OpenAI
-
-linkStyle 2,3,4,5 stroke-width:2px,fill:none,stroke:#90a4ae;
-linkStyle 6 stroke:#f57c00,stroke-width:2px;
-linkStyle 7 stroke:#2e7d32,stroke-width:2px,stroke-dasharray:5 5;
+User --> React
+React --> Express
+React --> FastAPI
+Express --> Postgres
+FastAPI --> LangGraph
+LangGraph --> RAG
+RAG --> Postgres
+LangGraph --> OpenAI
 ```
