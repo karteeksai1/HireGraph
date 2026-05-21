@@ -51,7 +51,8 @@ export default function InterviewSetup() {
           boilerplates: response.data.boilerplates,
           domain,
           difficulty,
-          candidateName
+          candidateName,
+          aiBooting: response.data.aiBooting
         }
       });
     } catch (err) {

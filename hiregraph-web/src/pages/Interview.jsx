@@ -31,6 +31,7 @@ export default function Interview() {
   const [isRunning, setIsRunning] = useState(false);
   const [isFetchingNext, setIsFetchingNext] = useState(false);
   const [lastScore, setLastScore] = useState(null);
+  const [aiStatus, setAiStatus] = useState(state.aiBooting ? 'booting' : 'unknown');
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -61,6 +62,35 @@ export default function Interview() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
+  useEffect(() => {
+    if (!sessionId) return;
+
+    let cancelled = false;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002';
+
+    const warmupAi = async () => {
+      setAiStatus('booting');
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        try {
+          const response = await axios.post(`${backendUrl}/api/ai/warmup`, {}, { timeout: 30000 });
+          if (!cancelled && response.data.ready) {
+            setAiStatus('ready');
+            return;
+          }
+        } catch {
+          // Keep the visible booting state; the next attempt may wake the service.
+        }
+        await new Promise(resolve => setTimeout(resolve, 4000));
+      }
+      if (!cancelled) setAiStatus('slow');
+    };
+
+    warmupAi();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
   const sendChatMessage = async () => {
     if (!chatInput.trim() || !sessionId) return;
     
@@ -69,6 +99,7 @@ export default function Interview() {
     setChatHistory(prev => [...prev, { sender: 'USER', message: userMsg }]);
 
     try {
+      if (aiStatus !== 'ready') setAiStatus('booting');
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/chat`, {
         sessionId,
         domain,
@@ -77,8 +108,10 @@ export default function Interview() {
       });
       
       setChatHistory(prev => [...prev, { sender: 'AI', message: response.data.reply }]);
+      setAiStatus('ready');
     } catch {
-      setChatHistory(prev => [...prev, { sender: 'AI', message: "Communication error." }]);
+      setAiStatus('slow');
+      setChatHistory(prev => [...prev, { sender: 'AI', message: "AI is still booting. Please wait a moment and try again." }]);
     }
   };
 
@@ -92,13 +125,16 @@ export default function Interview() {
     setTestResults(null);
     
     try {
+      if (aiStatus !== 'ready') setAiStatus('booting');
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/run`, {
         code: userCode,
         language,
         testCases
       });
       setTestResults(response.data.results);
+      setAiStatus('ready');
     } catch {
+      setAiStatus('slow');
       console.error("Run failed");
     } finally {
       setIsRunning(false);
@@ -116,6 +152,7 @@ export default function Interview() {
     }]);
 
     try {
+      if (aiStatus !== 'ready') setAiStatus('booting');
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/submit`, {
         sessionId,
         topic,
@@ -133,8 +170,13 @@ export default function Interview() {
         penalty: response.data.penalty
       }]);
       setLastScore(response.data.score);
-    } catch {
-      setChatHistory(prev => [...prev, { sender: 'AI', message: "Evaluation system offline." }]);
+      setAiStatus('ready');
+    } catch (error) {
+      setAiStatus('slow');
+      setChatHistory(prev => [...prev, {
+        sender: 'AI',
+        message: error.response?.data?.error || "AI is still booting. Please wait a moment and submit again."
+      }]);
     } finally {
       setIsEvaluating(false);
     }
@@ -185,6 +227,14 @@ export default function Interview() {
 
   return (
     <div className="flex h-screen bg-[#0d1117] font-sans overflow-hidden">
+      {aiStatus !== 'ready' && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-lg border border-[#6366F1]/40 bg-[#161b22] px-5 py-3 text-sm text-[#D1D5DB] shadow-2xl">
+          <span className="font-medium text-[#E6EDF3]">Please wait, AI is booting up.</span>
+          <span className="ml-2 text-[#8B949E]">
+            The interview starts instantly; hints, run, and grading will be ready shortly.
+          </span>
+        </div>
+      )}
       <div className="w-[35%] flex flex-col border-r border-[#30363d] bg-[#0d1117] z-10 relative">
         <div className="p-4 border-b border-[#30363d] flex justify-between items-center bg-[#161b22]">
            <button onClick={() => navigate('/dashboard')} className="text-sm text-[#8B949E] hover:text-[#E6EDF3] transition-colors">
@@ -216,7 +266,7 @@ export default function Interview() {
               </div>
             </div>
           ))}
-          {isEvaluating && <div className="text-xs text-[#8B949E] animate-pulse">Evaluating Architecture...</div>}
+          {isEvaluating && <div className="text-xs text-[#8B949E] animate-pulse">Evaluating with AI. Please wait...</div>}
           {isFetchingNext && <div className="text-xs text-[#8B949E] animate-pulse">Initializing Phase 2...</div>}
           <div ref={chatEndRef} />
         </div>

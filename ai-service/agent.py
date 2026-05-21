@@ -289,6 +289,17 @@ def dry_run_code(code: str, language: str, test_cases: list):
     except:
         return {"results": [{"actual_output": "Execution Error", "passed": False}, {"actual_output": "Execution Error", "passed": False}]}
 
+def warmup_model():
+    try:
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": "Reply with READY."}],
+            model="llama-3.1-8b-instant",
+            max_tokens=5
+        )
+        return {"ready": True, "reply": response.choices[0].message.content}
+    except Exception as e:
+        return {"ready": False, "error": str(e)}
+
 graph_builder = StateGraph(InterviewState)
 graph_builder.add_node("grade_submission", grade_submission)
 graph_builder.set_entry_point("grade_submission")

@@ -28,6 +28,45 @@ const pool = new Pool({
 });
 
 const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
+const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 120000);
+
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function warmAiService() {
+    try {
+        const response = await axios.post(`${AI_URL}/warmup`, {}, { timeout: 20000 });
+        return { ready: response.data?.ready !== false, data: response.data };
+    } catch (err) {
+        console.warn("AI warmup failed:", err.message);
+        return { ready: false, error: err.message };
+    }
+}
+
+function warmAiServiceInBackground() {
+    warmAiService().catch(err => console.warn("Background AI warmup failed:", err.message));
+}
+
+async function postAi(path, payload, options = {}) {
+    const retries = options.retries ?? 2;
+    const timeout = options.timeout ?? AI_TIMEOUT_MS;
+    let lastError;
+
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+        try {
+            return await axios.post(`${AI_URL}${path}`, payload, { timeout });
+        } catch (err) {
+            lastError = err;
+            if (attempt < retries) {
+                await warmAiService();
+                await sleep(1500 * (attempt + 1));
+            }
+        }
+    }
+
+    throw lastError;
+}
 
 function parseJsonContent(content) {
     if (!content) return null;
@@ -185,6 +224,14 @@ app.post('/api/auth/google', async (req, res) => {
     }
 });
 
+app.post('/api/ai/warmup', async (req, res) => {
+    const status = await warmAiService();
+    res.status(status.ready ? 200 : 202).json({
+        ready: status.ready,
+        message: status.ready ? 'AI service is ready.' : 'AI service is booting. Please wait a moment.'
+    });
+});
+
 app.post('/api/interview/start', async (req, res) => {
     const { userId, domain, difficulty } = req.body;
     try {
@@ -206,13 +253,16 @@ app.post('/api/interview/start', async (req, res) => {
                 optimal_space: question.optimal_space
             })]
         );
+
+        warmAiServiceInBackground();
         
         res.json({ 
             sessionId: newSession.rows[0].id,
             topic: question.question_title,
             question: question.question_text,
             testCases: question.test_cases,
-            boilerplates: question.boilerplates
+            boilerplates: question.boilerplates,
+            aiBooting: true
         });
     } catch (err) {
         console.error("Interview start error:", err);
@@ -274,12 +324,12 @@ app.post('/api/interview/chat', async (req, res) => {
             return `${row.sender_type}: ${row.message_content}`;
         });
 
-        const aiResponse = await axios.post(`${AI_URL}/chat`, {
+        const aiResponse = await postAi('/chat', {
             domain,
             message,
             chat_history: chatHistory,
             question: questionText
-        });
+        }, { retries: 2, timeout: AI_TIMEOUT_MS });
 
         await pool.query(
             'INSERT INTO interview_messages (session_id, sender_type, message_content) VALUES ($1, $2, $3)',
@@ -296,9 +346,9 @@ app.post('/api/interview/chat', async (req, res) => {
 app.post('/api/interview/run', async (req, res) => {
     const { code, language, testCases } = req.body;
     try {
-        const aiResponse = await axios.post(`${AI_URL}/run`, {
+        const aiResponse = await postAi('/run', {
             code, language, test_cases: testCases
-        });
+        }, { retries: 2, timeout: AI_TIMEOUT_MS });
         res.json(aiResponse.data);
     } catch (err) {
         res.status(500).json({ error: 'Run failed' });
@@ -330,9 +380,9 @@ app.post('/api/interview/submit', async (req, res) => {
             return `Interviewer: ${row.message_content}`;
         });
 
-        const aiResponse = await axios.post(`${AI_URL}/grade`, {
+        const aiResponse = await postAi('/grade', {
             topic, domain, language, user_code: userCode, chat_history: chatHistory
-        });
+        }, { retries: 3, timeout: 180000 });
 
         const { is_passed, score, metrics, feedback } = aiResponse.data;
         const penalty = calculatePenalty({ hintCount: existingStats.hintCount, attemptNumber, isPassed: is_passed });
@@ -357,7 +407,8 @@ app.post('/api/interview/submit', async (req, res) => {
 
         res.json({ isPassed: is_passed, score: adjustedScore, rawScore: score, penalty, metrics, feedback });
     } catch (err) {
-        res.status(500).json({ error: 'AI Evaluation Failed' });
+        console.error("AI evaluation failed:", err.message);
+        res.status(503).json({ error: 'AI is still booting. Please wait and submit again.' });
     }
 });
 

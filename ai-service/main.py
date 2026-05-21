@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from agent import graph, retrieve_question, get_chat_response, dry_run_code
+from agent import graph, retrieve_question, get_chat_response, dry_run_code, warmup_model
 
 app = FastAPI()
 
@@ -31,6 +31,14 @@ class RunRequest(BaseModel):
     code: str
     language: str
     test_cases: list
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+@app.post("/warmup")
+async def warmup():
+    return warmup_model()
 
 @app.post("/question")
 async def get_question(request: QuestionRequest):
