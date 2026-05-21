@@ -14,7 +14,7 @@ export default function Scorecard() {
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/sessions/details/${sessionId}`);
         setData(response.data);
-      } catch (error) {
+      } catch {
         console.error("Failed to load scorecard");
       } finally {
         setLoading(false);
@@ -52,7 +52,7 @@ export default function Scorecard() {
   if (finalAiMessage && finalAiMessage.message_content) {
     try {
       parsedContent = JSON.parse(finalAiMessage.message_content);
-    } catch (e) {
+    } catch {
       parsedContent.feedback = finalAiMessage.message_content; 
     }
   }

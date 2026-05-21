@@ -48,31 +48,31 @@ app.post('/api/signup', async (req, res) => {
     }
 });
 
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // GUARD 1: Did the frontend actually send a password?
-        if (!password) {
-            return res.status(400).json({ error: "Password is required" });
+        if (!email || !password) {
+            return res.status(400).json({ error: "Email and password are required" });
         }
 
-        // Fetch user from your database (adjust this line based on your DB setup)
-        const user = await User.findOne({ email }); 
+        const userResult = await pool.query(
+            'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+            [email]
+        );
+        const user = userResult.rows[0];
 
-        // GUARD 2: Does the user exist in the database?
-        if (!user || !user.password) {
+        if (!user || !user.password_hash || user.password_hash === 'google_oauth_user') {
             return res.status(401).json({ error: "Invalid email or password" });
         }
 
-        // NOW it is safe to run bcrypt
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid email or password" });
         }
 
-        // ... continue with login (send JWT, etc.) ...
+        res.json({ id: user.id, name: user.name, email: user.email });
 
     } catch (error) {
         console.error("Login error:", error);

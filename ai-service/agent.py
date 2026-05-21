@@ -1,6 +1,5 @@
 import os
 import json
-import requests
 import random
 from typing import TypedDict, List
 from langgraph.graph import StateGraph, END
@@ -13,8 +12,65 @@ load_dotenv()
 
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
-index = pc.Index("hiregraph")
+INDEX_NAME = os.environ.get("PINECONE_INDEX", "hiregraph")
+index = pc.Index(INDEX_NAME)
 hf_client = InferenceClient(token=os.environ.get("HF_API_KEY"))
+
+EMPTY_BOILERPLATES = {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
+
+def parse_metadata_json(metadata: dict, key: str, fallback):
+    value = metadata.get(key, fallback)
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return fallback
+    return value if value is not None else fallback
+
+def generate_boilerplates(domain: str, title: str):
+    if domain == "sql":
+        return {**EMPTY_BOILERPLATES, "sql": "-- Write your query here\n"}
+    if domain == "dsa":
+        return {
+            "python": "class Solution:\n    def solve(self):\n        pass\n",
+            "javascript": "function solve() {\n  // Write your solution here\n}\n",
+            "java": "class Solution {\n    public void solve() {\n        // Write your solution here\n    }\n}\n",
+            "cpp": "class Solution {\npublic:\n    void solve() {\n        // Write your solution here\n    }\n};\n",
+            "sql": ""
+        }
+    return EMPTY_BOILERPLATES.copy()
+
+def generate_test_cases(domain: str, question_text: str):
+    if domain not in {"dsa", "sql"}:
+        return []
+
+    prompt = f"""
+    Generate exactly 2 concise sample test cases for this {domain.upper()} interview question.
+    Question: {question_text}
+
+    Respond in strict JSON:
+    {{"test_cases": [{{"input": "string", "expected_output": "string"}}]}}
+    """
+    try:
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            response_format={"type": "json_object"}
+        )
+        parsed = json.loads(response.choices[0].message.content)
+        test_cases = parsed.get("test_cases", [])
+        if isinstance(test_cases, list):
+            return [
+                {
+                    "input": str(case.get("input", "")),
+                    "expected_output": str(case.get("expected_output", ""))
+                }
+                for case in test_cases
+                if isinstance(case, dict)
+            ]
+    except Exception:
+        pass
+    return []
 
 class InterviewState(TypedDict):
     domain: str
@@ -83,7 +139,7 @@ def retrieve_question(state: dict):
                 "question_title": "Error", 
                 "question_text": f"No question found matching domain '{domain}' and difficulty '{difficulty}'.", 
                 "test_cases": [], 
-                "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
+                "boilerplates": EMPTY_BOILERPLATES.copy()
             }
             
         match_node = random.choice(matches)
@@ -93,21 +149,31 @@ def retrieve_question(state: dict):
         else:
             match_metadata = getattr(match_node, 'metadata', {})
         
+        question_title = match_metadata.get("title", "Unknown Title")
+        question_text = match_metadata.get("text", "No description available.")
+        test_cases = parse_metadata_json(match_metadata, "test_cases_json", [])
+        boilerplates = parse_metadata_json(match_metadata, "boilerplates_json", None)
+
+        if not boilerplates:
+            boilerplates = generate_boilerplates(domain, question_title)
+        if not test_cases:
+            test_cases = generate_test_cases(domain, question_text)
+
         return {
-            "question_title": match_metadata.get("title", "Unknown Title"),
-            "question_text": match_metadata.get("text", "No description available."),
+            "question_title": question_title,
+            "question_text": question_text,
             "optimal_time": match_metadata.get("optimal_time", "N/A"),
             "optimal_space": match_metadata.get("optimal_space", "N/A"),
-            "test_cases": [], 
-            "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
+            "test_cases": test_cases, 
+            "boilerplates": boilerplates
         }
     except Exception as e:
-        exact_error = f"🚨 BACKEND CRASH: {type(e).__name__} -> {str(e)}"
+        exact_error = f"AI service error: {type(e).__name__} -> {str(e)}"
         return {
             "question_title": "System Error", 
             "question_text": exact_error, 
             "test_cases": [], 
-            "boilerplates": {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
+            "boilerplates": EMPTY_BOILERPLATES.copy()
         }
 
 def grade_submission(state: InterviewState):

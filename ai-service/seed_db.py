@@ -1,112 +1,74 @@
+import json
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
-from google import genai
+from huggingface_hub import InferenceClient
 from pinecone import Pinecone
 
 load_dotenv()
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+INDEX_NAME = os.environ.get("PINECONE_INDEX", "hiregraph")
+QUESTIONS_PATH = Path(__file__).resolve().parents[1] / "backend" / "questions.json"
+
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
-index = pc.Index("hiregraph-dsa-v2")
+index = pc.Index(INDEX_NAME)
+hf_client = InferenceClient(token=os.environ.get("HF_API_KEY"))
 
-interview_database = {
-    "dsa": [
-        {
-            "id": "dsa-1",
-            "topic": "Linked Lists",
-            "question": "Given head, the head of a linked list, determine if the linked list has a cycle in it.",
-            "optimal_time": "O(N)",
-            "optimal_space": "O(1)",
-            "optimal_data_structure": "Two Pointers (Slow/Fast)"
-        },
-        {
-            "id": "dsa-2",
-            "topic": "Arrays",
-            "question": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
-            "optimal_time": "O(N)",
-            "optimal_space": "O(N)",
-            "optimal_data_structure": "Hash Map"
-        }
-    ],
-    "system-design": [
-        {
-            "id": "sd-1",
-            "topic": "Rate Limiting",
-            "question": "Design a distributed rate limiter for a public API that allows 100 requests per minute per user.",
-            "optimal_time": "O(1) read/write per request",
-            "optimal_space": "O(Users)",
-            "optimal_data_structure": "Redis (Token Bucket or Sliding Window Log)"
-        },
-        {
-            "id": "sd-2",
-            "topic": "Microservices",
-            "question": "Explain how you would handle distributed transactions across three separate microservices to guarantee data consistency.",
-            "optimal_time": "N/A",
-            "optimal_space": "N/A",
-            "optimal_data_structure": "Saga Pattern or Two-Phase Commit (2PC)"
-        }
-    ],
-    "frontend": [
-        {
-            "id": "fe-1",
-            "topic": "React Hooks",
-            "question": "Explain the difference between useEffect and useLayoutEffect, and provide a scenario where useLayoutEffect is strictly required.",
-            "optimal_time": "N/A",
-            "optimal_space": "N/A",
-            "optimal_data_structure": "React rendering lifecycle knowledge"
-        },
-        {
-            "id": "fe-2",
-            "topic": "State Management",
-            "question": "Implement a global theme provider (dark/light mode) in React without using Redux or Zustand. Justify your architectural choices.",
-            "optimal_time": "N/A",
-            "optimal_space": "N/A",
-            "optimal_data_structure": "React Context API"
-        }
-    ],
-    "sql": [
-        {
-            "id": "sql-1",
-            "topic": "Window Functions",
-            "question": "Write a SQL query to find the top 3 highest paid employees in each department. A department can have less than 3 employees.",
-            "optimal_time": "O(N log N) database execution",
-            "optimal_space": "O(N)",
-            "optimal_data_structure": "DENSE_RANK() OVER (PARTITION BY ...)"
-        },
-        {
-            "id": "sql-2",
-            "topic": "Query Optimization",
-            "question": "Your SELECT query joining the 'users' and 'orders' tables is taking 5 seconds. Walk me through exactly how you diagnose and fix the N+1 query problem.",
-            "optimal_time": "O(1) query execution via batching",
-            "optimal_space": "O(N) memory allocation",
-            "optimal_data_structure": "JOINs or Eager Loading"
-        }
-    ]
-}
+EMPTY_BOILERPLATES = {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
 
-for namespace, questions in interview_database.items():
-    print(f"Processing namespace: {namespace}")
-    
+def get_embedding(text: str):
+    response = hf_client.feature_extraction(
+        text,
+        model="sentence-transformers/all-MiniLM-L6-v2"
+    )
+    res = response.tolist() if hasattr(response, "tolist") else response
+    if isinstance(res, list) and len(res) > 0 and isinstance(res[0], list):
+        return res[0]
+    return res
+
+def default_boilerplates(domain: str):
+    if domain == "sql":
+        return {**EMPTY_BOILERPLATES, "sql": "-- Write your query here\n"}
+    if domain == "dsa":
+        return {
+            "python": "class Solution:\n    def solve(self):\n        pass\n",
+            "javascript": "function solve() {\n  // Write your solution here\n}\n",
+            "java": "class Solution {\n    public void solve() {\n        // Write your solution here\n    }\n}\n",
+            "cpp": "class Solution {\npublic:\n    void solve() {\n        // Write your solution here\n    }\n};\n",
+            "sql": ""
+        }
+    return EMPTY_BOILERPLATES.copy()
+
+def load_data_to_pinecone():
+    with QUESTIONS_PATH.open("r", encoding="utf-8") as f:
+        questions = json.load(f)
+
     vectors_to_upsert = []
-    
-    for item in questions:
-        response = client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=item["topic"]
-        )
-        embedding = response.embeddings[0].values
-        
+    for q in questions:
+        print(f"Vectorizing: {q['title']}...")
+        text_to_embed = f"{q['domain']} {q['difficulty']} {q['title']} - {q['text']}"
+        embedding = get_embedding(text_to_embed)
+        boilerplates = q.get("boilerplates") or default_boilerplates(q["domain"])
+        test_cases = q.get("test_cases", [])
+
         vectors_to_upsert.append({
-            "id": item["id"],
+            "id": q["id"],
             "values": embedding,
             "metadata": {
-                "question": item["question"],
-                "optimal_time": item["optimal_time"],
-                "optimal_space": item["optimal_space"],
-                "optimal_data_structure": item["optimal_data_structure"]
+                "domain": q["domain"],
+                "difficulty": q["difficulty"],
+                "title": q["title"],
+                "text": q["text"],
+                "optimal_time": q.get("optimal_time", "N/A"),
+                "optimal_space": q.get("optimal_space", "N/A"),
+                "test_cases_json": json.dumps(test_cases),
+                "boilerplates_json": json.dumps(boilerplates)
             }
         })
-    
-    index.upsert(vectors=vectors_to_upsert, namespace=namespace)
 
-print("\nMulti-Domain Database seeded successfully!")
+    index.upsert(vectors=vectors_to_upsert)
+    print(f"Seeded {len(vectors_to_upsert)} questions into Pinecone index '{INDEX_NAME}'.")
+
+if __name__ == "__main__":
+    load_data_to_pinecone()

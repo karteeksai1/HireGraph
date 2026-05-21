@@ -18,7 +18,7 @@ export default function Login() {
     e.preventDefault();
     try {
       const endpoint = isSignUp ? '/api/signup' : '/api/login';
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}${endpoint}`, formData);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}${endpoint}`, formData);
       
       localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
       navigate('/dashboard');
@@ -35,7 +35,7 @@ export default function Login() {
       const decodedToken = JSON.parse(window.atob(base64));
 
       // 2. Send the actual email and name to your Node.js backend
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/auth/google`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/auth/google`, {
         email: decodedToken.email,
         name: decodedToken.name
       });

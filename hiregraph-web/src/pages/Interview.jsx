@@ -8,10 +8,10 @@ export default function Interview() {
   const location = useLocation();
   const state = location.state || {};
 
-  const [sessionId, setSessionId] = useState(state.sessionId || null);
-  const [candidateName, setCandidateName] = useState(state.candidateName || 'Candidate');
-  const [domain, setDomain] = useState(state.domain || 'dsa');
-  const [difficulty, setDifficulty] = useState(state.difficulty || 'medium');
+  const sessionId = state.sessionId || null;
+  const candidateName = state.candidateName || 'Candidate';
+  const domain = state.domain || 'dsa';
+  const difficulty = state.difficulty || 'medium';
   const [topic, setTopic] = useState(state.topic || 'Random Question');
   const [questionText, setQuestionText] = useState(state.question || '');
   
@@ -76,7 +76,7 @@ export default function Interview() {
       });
       
       setChatHistory(prev => [...prev, { sender: 'AI', message: response.data.reply }]);
-    } catch (error) {
+    } catch {
       setChatHistory(prev => [...prev, { sender: 'AI', message: "Communication error." }]);
     }
   };
@@ -97,7 +97,7 @@ export default function Interview() {
         testCases
       });
       setTestResults(response.data.results);
-    } catch (error) {
+    } catch {
       console.error("Run failed");
     } finally {
       setIsRunning(false);
@@ -129,7 +129,7 @@ export default function Interview() {
         isPassed: response.data.isPassed,
         score: response.data.score
       }]);
-    } catch (error) {
+    } catch {
       setChatHistory(prev => [...prev, { sender: 'AI', message: "Evaluation system offline." }]);
     } finally {
       setIsEvaluating(false);
@@ -161,7 +161,7 @@ export default function Interview() {
             message: `Phase 2 initiated.\n\nNew Challenge: ${response.data.topic}\n\n${response.data.question}` 
           }]);
 
-      } catch (error) {
+      } catch {
           alert("Failed to load Phase 2.");
       } finally {
           setIsFetchingNext(false);
@@ -173,7 +173,7 @@ export default function Interview() {
     try {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/finish`, { sessionId });
       navigate(`/scorecard/${sessionId}`);
-    } catch (error) {
+    } catch {
       alert("Failed to close session.");
     }
   };

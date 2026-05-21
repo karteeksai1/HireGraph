@@ -1,21 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Constellation from '../components/Constellation';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [userName, setUserName] = useState('');
+  const storedUser = JSON.parse(localStorage.getItem('hiregraph_user') || '{}');
+  const firstName = storedUser.name ? storedUser.name.split(' ')[0] : 'Engineer';
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('hiregraph_user'));
-    if (user && user.name) {
-      setUserName(user.name);
-    } else {
+    if (!storedUser.name) {
       navigate('/login');
     }
-  }, [navigate]);
-const storedUser = JSON.parse(localStorage.getItem('hiregraph_user') || '{}');
-const firstName = storedUser.name ? storedUser.name.split(' ')[0] : 'Engineer';
+  }, [navigate, storedUser.name]);
+
   return (
     <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">
       <Constellation />

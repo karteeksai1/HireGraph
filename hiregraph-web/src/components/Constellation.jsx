@@ -1,5 +1,29 @@
 import { useEffect, useRef } from 'react';
 
+class Particle {
+  constructor(canvas) {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random() - 0.5) * 0.7;
+    this.vy = (Math.random() - 0.5) * 0.7;
+    this.radius = Math.random() * 2 + 1;
+  }
+
+  update(canvas) {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
+    if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+  }
+
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(219, 234, 254, 0.9)'; 
+    ctx.fill();
+  }
+}
+
 export default function Constellation() {
   const canvasRef = useRef(null);
 
@@ -17,36 +41,14 @@ export default function Constellation() {
     window.addEventListener('resize', resize);
     resize();
 
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.7;
-        this.vy = (Math.random() - 0.5) * 0.7;
-        this.radius = Math.random() * 2 + 1;
-      }
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
-        if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(219, 234, 254, 0.9)'; 
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < 150; i++) particles.push(new Particle());
+    for (let i = 0; i < 150; i++) particles.push(new Particle(canvas));
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       particles.forEach(p => {
-        p.update();
-        p.draw();
+        p.update(canvas);
+        p.draw(ctx);
       });
 
       for (let i = 0; i < particles.length; i++) {
