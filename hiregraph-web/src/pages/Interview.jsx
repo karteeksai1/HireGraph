@@ -6,7 +6,13 @@ import axios from 'axios';
 export default function Interview() {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state || {};
+  let storedInterview = null;
+  try {
+    storedInterview = JSON.parse(localStorage.getItem('hiregraph_active_interview') || 'null');
+  } catch {
+    localStorage.removeItem('hiregraph_active_interview');
+  }
+  const state = location.state || storedInterview || {};
 
   const sessionId = state.sessionId || null;
   const candidateName = state.candidateName || 'Candidate';
@@ -35,7 +41,7 @@ export default function Interview() {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    if (!location.state) {
+    if (!location.state && !storedInterview?.sessionId) {
       navigate('/setup');
       return;
     }
@@ -48,7 +54,22 @@ export default function Interview() {
         }
       ]);
     }
-  }, [location.state, navigate, chatHistory.length, candidateName, topic, questionText, difficulty]);
+  }, [location.state, navigate, chatHistory.length, candidateName, topic, questionText, difficulty, storedInterview?.sessionId]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    localStorage.setItem('hiregraph_active_interview', JSON.stringify({
+      sessionId,
+      candidateName,
+      domain,
+      difficulty,
+      topic,
+      question: questionText,
+      testCases,
+      boilerplates,
+      aiBooting: aiStatus !== 'ready'
+    }));
+  }, [sessionId, candidateName, domain, difficulty, topic, questionText, testCases, boilerplates, aiStatus]);
 
   useEffect(() => {
     if (boilerplates && boilerplates[language]) {
@@ -220,6 +241,7 @@ export default function Interview() {
     if (!sessionId) return;
     try {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/finish`, { sessionId });
+      localStorage.removeItem('hiregraph_active_interview');
       navigate(`/scorecard/${sessionId}`);
     } catch {
       alert("Failed to close session.");

@@ -56,6 +56,17 @@ export default function InterviewSetup() {
           aiBooting: response.data.aiBooting
         }
       });
+      localStorage.setItem('hiregraph_active_interview', JSON.stringify({
+        sessionId: response.data.sessionId,
+        question: response.data.question,
+        topic: response.data.topic,
+        testCases: response.data.testCases,
+        boilerplates: response.data.boilerplates,
+        domain,
+        difficulty,
+        candidateName,
+        aiBooting: response.data.aiBooting
+      }));
     } catch (err) {
       console.error("Failed to start:", err);
       alert("Server is waking up or busy. Please wait 1 minute and try again.");
