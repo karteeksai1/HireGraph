@@ -67,6 +67,5 @@ LangGraph <==>|Model Calls| OpenAI
 
 linkStyle 2,3,4,5 stroke-width:2px,fill:none,stroke:#90a4ae;
 linkStyle 6 stroke:#f57c00,stroke-width:2px;
-
-linkStyle 7 stroke:#2e7d32,stroke-width:2px,stroke-dasharray: 5 5;
+linkStyle 7 stroke:#2e7d32,stroke-width:2px,stroke-dasharray:5 5;
 ```
