@@ -22,6 +22,7 @@ Follow these steps to clone, configure, and spin up the complete local developme
 
 ## 🏗️ System Architecture
 
+```mermaid
 graph TD
 classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#333;
 classDef express fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#333;
@@ -37,12 +38,12 @@ end
 
 subgraph Backend_Tier [Backend Tier]
     Express[Express Backend<br/>Node.js/TS<br/>Auth & Sessions]:::express
-    
+
     subgraph AI_Engine [AI Orchestration Engine]
         FastAPI[FastAPI<br/>Python]:::fastapi
         LangGraph[LangGraph<br/>Agent State Machine]:::fastapi
         RAG[RAG Evaluation Layer]:::fastapi
-        
+
         FastAPI --> LangGraph
         LangGraph --> RAG
     end
@@ -66,4 +67,6 @@ LangGraph <==>|Model Calls| OpenAI
 
 linkStyle 2,3,4,5 stroke-width:2px,fill:none,stroke:#90a4ae;
 linkStyle 6 stroke:#f57c00,stroke-width:2px;
+
 linkStyle 7 stroke:#2e7d32,stroke-width:2px,stroke-dasharray: 5 5;
+```
