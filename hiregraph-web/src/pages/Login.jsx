@@ -50,16 +50,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white p-4">
-      <div className="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700 w-full max-w-md">
+    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-[#fff7e3] p-4">
+      <div className="bg-[#11100c] p-8 rounded-xl shadow-2xl border border-[#3a2b14] w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-500 mb-2">HireGraph AI</h1>
-          <p className="text-gray-400">
+          <h1 className="text-3xl font-bold text-[#f0b23d] mb-2">HireGraph AI</h1>
+          <p className="text-[#b9aa8d]">
             {isSignUp ? 'Create your account to start interviewing.' : 'Sign in to continue your progress.'}
           </p>
         </div>
 
-        {error && <div className="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded mb-4 text-sm text-center">{error}</div>}
+        {error && <div className="bg-[#f0b23d]/10 border border-[#f0b23d]/40 text-[#f7c96b] p-3 rounded mb-4 text-sm text-center">{error}</div>}
 
         <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4 mb-6">
           {isSignUp && (
@@ -70,7 +70,7 @@ export default function Login() {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="bg-gray-900 border border-gray-700 text-white p-3 rounded focus:outline-none focus:border-blue-500 transition-colors"
+              className="bg-[#050505] border border-[#3a2b14] text-[#fff7e3] p-3 rounded focus:outline-none focus:border-[#f0b23d] transition-colors"
             />
           )}
           <input
@@ -80,7 +80,7 @@ export default function Login() {
             value={formData.email}
             onChange={handleInputChange}
             required
-            className="bg-gray-900 border border-gray-700 text-white p-3 rounded focus:outline-none focus:border-blue-500 transition-colors"
+            className="bg-[#050505] border border-[#3a2b14] text-[#fff7e3] p-3 rounded focus:outline-none focus:border-[#f0b23d] transition-colors"
           />
           <input
             type="password"
@@ -89,20 +89,20 @@ export default function Login() {
             value={formData.password}
             onChange={handleInputChange}
             required
-            className="bg-gray-900 border border-gray-700 text-white p-3 rounded focus:outline-none focus:border-blue-500 transition-colors"
+            className="bg-[#050505] border border-[#3a2b14] text-[#fff7e3] p-3 rounded focus:outline-none focus:border-[#f0b23d] transition-colors"
           />
           <button 
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded font-bold transition-colors mt-2"
+            className="w-full bg-[#f0b23d] hover:bg-[#d9961f] text-[#050505] p-3 rounded font-bold transition-colors mt-2"
           >
             {isSignUp ? 'Sign Up' : 'Log In'}
           </button>
         </form>
 
         <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 border-t border-gray-700"></div>
-          <span className="text-gray-500 text-sm">OR</span>
-          <div className="flex-1 border-t border-gray-700"></div>
+          <div className="flex-1 border-t border-[#3a2b14]"></div>
+          <span className="text-[#8f805f] text-sm">OR</span>
+          <div className="flex-1 border-t border-[#3a2b14]"></div>
         </div>
 
         <div className="w-full flex justify-center mb-6">
@@ -116,7 +116,7 @@ export default function Login() {
           />
         </div>
 
-        <div className="text-center text-gray-400 text-sm">
+        <div className="text-center text-[#b9aa8d] text-sm">
           {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
           <button 
             type="button"
@@ -125,7 +125,7 @@ export default function Login() {
               setError('');
               setFormData({ name: '', email: '', password: '' });
             }}
-            className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+            className="text-[#f0b23d] hover:text-[#f7c96b] font-semibold transition-colors"
           >
             {isSignUp ? 'Log In' : 'Sign Up'}
           </button>

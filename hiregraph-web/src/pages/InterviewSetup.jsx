@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Constellation from '../components/Constellation';
 
 export default function InterviewSetup() {
   const navigate = useNavigate();
@@ -76,28 +75,26 @@ export default function InterviewSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117] font-sans flex flex-col relative overflow-hidden">
-      <Constellation />
-      
+    <div className="min-h-screen bg-[#050505] font-sans flex flex-col relative overflow-hidden">
       <div className="relative z-10 flex-1 flex flex-col max-w-5xl mx-auto w-full px-6 py-8">
-        <header className="flex justify-between items-center mb-8 border-b border-[#30363d] pb-5">
-          <button onClick={() => navigate('/dashboard')} className="text-sm text-[#9BA3AF] hover:text-[#E6EDF3] transition-colors">
+        <header className="flex justify-between items-center mb-8 border-b border-[#3a2b14] pb-5">
+          <button onClick={() => navigate('/dashboard')} className="text-sm text-[#c8b994] hover:text-[#fff7e3] transition-colors">
             ← Back
           </button>
-          <h1 className="text-sm font-medium text-[#8B949E] tracking-widest uppercase">Configuration</h1>
+          <h1 className="text-sm font-medium text-[#b9aa8d] tracking-widest uppercase">Configuration</h1>
         </header>
 
         <main className="flex-1 flex flex-col justify-center w-full mx-auto">
           <div className="mb-10">
-            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-r from-[#E6EDF3] to-[#C9D6FF] bg-clip-text text-transparent">
+            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-r from-[#fff7e3] to-[#f7c96b] bg-clip-text text-transparent">
               Session Parameters
             </h2>
-            <p className="text-[#8B949E] text-sm font-light">Choose a local question instantly, then use AI for hints and scoring.</p>
+            <p className="text-[#b9aa8d] text-sm font-light">Choose a local question instantly, then use AI for hints and scoring.</p>
           </div>
 
-          <div className="space-y-8 bg-[#161b22] p-8 rounded-xl border border-[#30363d]">
+          <div className="space-y-8 bg-[#11100c] p-8 rounded-xl border border-[#3a2b14]">
             <div>
-              <h3 className="text-sm font-medium mb-4 text-[#D1D5DB]">
+              <h3 className="text-sm font-medium mb-4 text-[#f2e6c8]">
                 1. Domain Vector
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -107,18 +104,18 @@ export default function InterviewSetup() {
                     onClick={() => setDomain(key)}
                     className={`p-4 rounded-lg border text-left transition-all duration-200 ${
                       domain === key 
-                        ? 'border-[#6366F1] bg-[#6366F1]/10' 
-                        : 'border-[#30363d] bg-[#0d1117] hover:border-[#8B949E]'
+                        ? 'border-[#f0b23d] bg-[#f0b23d]/10' 
+                        : 'border-[#3a2b14] bg-[#050505] hover:border-[#b9aa8d]'
                     }`}
                   >
-                    <div className={`font-light text-sm ${domain === key ? 'text-[#E6EDF3]' : 'text-[#9BA3AF]'}`}>{label}</div>
+                    <div className={`font-light text-sm ${domain === key ? 'text-[#fff7e3]' : 'text-[#c8b994]'}`}>{label}</div>
                   </button>
                 ))}
               </div>
             </div>
 
             <div className={`transition-opacity duration-300 ${domain ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-              <h3 className="text-sm font-medium mb-4 text-[#D1D5DB]">
+              <h3 className="text-sm font-medium mb-4 text-[#f2e6c8]">
                 2. Difficulty Level
               </h3>
               <div className="flex gap-3">
@@ -128,8 +125,8 @@ export default function InterviewSetup() {
                     onClick={() => setDifficulty(diff)}
                     className={`flex-1 py-3 rounded-lg border text-sm capitalize transition-all duration-200 ${
                       difficulty === diff
-                        ? 'border-[#6366F1] bg-[#6366F1]/10 text-[#E6EDF3]'
-                        : 'border-[#30363d] bg-[#0d1117] text-[#9BA3AF] hover:border-[#8B949E]'
+                        ? 'border-[#f0b23d] bg-[#f0b23d]/10 text-[#fff7e3]'
+                        : 'border-[#3a2b14] bg-[#050505] text-[#c8b994] hover:border-[#b9aa8d]'
                     }`}
                   >
                     {diff}
@@ -145,8 +142,8 @@ export default function InterviewSetup() {
               disabled={!domain || !difficulty || isStarting}
               className={`px-8 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
                 !domain || !difficulty
-                  ? 'bg-[#21262d] text-[#8B949E] cursor-not-allowed border border-[#30363d]' 
-                  : 'bg-[#6366F1] hover:bg-[#4f46e5] text-white shadow-sm'
+                  ? 'bg-[#1a1710] text-[#b9aa8d] cursor-not-allowed border border-[#3a2b14]' 
+                  : 'bg-[#f0b23d] hover:bg-[#d9961f] text-[#050505] shadow-sm'
               }`}
             >
               {isStarting ? 'Initiating...' : 'Start Session'}
