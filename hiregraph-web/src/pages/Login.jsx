@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -8,6 +8,37 @@ export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [authStatus, setAuthStatus] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002';
+
+  useEffect(() => {
+    const user = localStorage.getItem('hiregraph_user');
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const postWithRetry = async (url, payload, attempts = 3) => {
+    let lastError;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        return await axios.post(url, payload, { timeout: 45000 });
+      } catch (err) {
+        lastError = err;
+        if (attempt < attempts) {
+          setAuthStatus(`Backend is waking up. Retrying ${attempt + 1}/${attempts}...`);
+          await wait(1800 * attempt);
+        }
+      }
+    }
+
+    throw lastError;
+  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,36 +47,49 @@ export default function Login() {
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    setIsAuthenticating(true);
+    setError('');
+    setAuthStatus(isSignUp ? 'Creating your account...' : 'Signing you in...');
     try {
       const endpoint = isSignUp ? '/api/signup' : '/api/login';
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}${endpoint}`, formData);
+      const response = await postWithRetry(`${backendUrl}${endpoint}`, formData);
       
       localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Authentication failed');
+    } finally {
+      setIsAuthenticating(false);
+      setAuthStatus('');
     }
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    setIsAuthenticating(true);
+    setError('');
+    setAuthStatus('Signing in with Google...');
     try {
-      // 1. Decode the encrypted Google JWT token
+      if (!credentialResponse.credential) {
+        throw new Error('Google did not return a credential.');
+      }
+
       const base64Url = credentialResponse.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const decodedToken = JSON.parse(window.atob(base64));
 
-      // 2. Send the actual email and name to your Node.js backend
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/auth/google`, {
+      const response = await postWithRetry(`${backendUrl}/api/auth/google`, {
         email: decodedToken.email,
         name: decodedToken.name
       });
       
-      // 3. Save the user and redirect to dashboard
       localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      console.error("Full Google Error:", err); // This prints the real error to your console
-      setError('Google Authentication failed');
+      console.error("Full Google Error:", err);
+      setError(err.response?.data?.error || 'Google authentication failed. Please try again.');
+    } finally {
+      setIsAuthenticating(false);
+      setAuthStatus('');
     }
   };
 
@@ -60,6 +104,7 @@ export default function Login() {
         </div>
 
         {error && <div className="bg-[#f0b23d]/10 border border-[#f0b23d]/40 text-[#f7c96b] p-3 rounded mb-4 text-sm text-center">{error}</div>}
+        {authStatus && <div className="bg-[#050505] border border-[#3a2b14] text-[#f7c96b] p-3 rounded mb-4 text-sm text-center">{authStatus}</div>}
 
         <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4 mb-6">
           {isSignUp && (
@@ -93,9 +138,10 @@ export default function Login() {
           />
           <button 
             type="submit"
+            disabled={isAuthenticating}
             className="w-full bg-[#f0b23d] hover:bg-[#d9961f] text-[#050505] p-3 rounded font-bold transition-colors mt-2"
           >
-            {isSignUp ? 'Sign Up' : 'Log In'}
+            {isAuthenticating ? 'Working...' : isSignUp ? 'Sign Up' : 'Log In'}
           </button>
         </form>
 
@@ -111,7 +157,7 @@ export default function Login() {
             onError={() => setError('Google Login Failed')}
             theme="filled_black"
             size="large"
-            width="100%"
+            width="320"
             text={isSignUp ? "signup_with" : "signin_with"}
           />
         </div>
