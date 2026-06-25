@@ -1,273 +1,265 @@
-import os
-import time
+from __future__ import annotations
+
 import sqlite3
-import hashlib
-import random
-import subprocess
 import threading
-import requests
+from collections import defaultdict, deque
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from functools import wraps
+from time import perf_counter
+from typing import Callable, Iterator
 
-PASSWORD = "admin123"
-SECRET_KEY = "super_secret_key"
-API_KEY = "sk-prod-secret"
-DB_PASS = "root"
 
-global_cache = {}
-all_users = []
-temp_data = []
+def timer(func: Callable):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = perf_counter()
+        result = func(*args, **kwargs)
+        _ = perf_counter() - start
+        return result
+    return wrapper
 
-class usermanager:
-    def __init__(self):
-        self.users = []
-        self.db = sqlite3.connect("users.db", check_same_thread=False)
-        self.cursor = self.db.cursor()
-        self.cursor.execute("create table if not exists users(id integer,name text,password text)")
-        self.db.commit()
 
-    def addUser(self,name,password):
-        q = "insert into users(name,password) values('" + name + "','" + password + "')"
-        self.cursor.execute(q)
-        self.db.commit()
-        self.users.append((name,password))
+@contextmanager
+def db_connection(path: str) -> Iterator[sqlite3.Connection]:
+    conn = sqlite3.connect(path)
+    try:
+        yield conn
+    finally:
+        conn.close()
 
-    def login(self,name,password):
-        query = f"select * from users where name='{name}' and password='{password}'"
-        rows = self.cursor.execute(query).fetchall()
-        if len(rows)>0:
-            return True
-        return False
 
-    def getUsers(self):
-        return self.users
+@dataclass(slots=True)
+class Node:
+    key: int
+    value: int
+    prev: Node | None = None
+    next: Node | None = None
 
-def md5password(password):
-    return hashlib.md5(password.encode()).hexdigest()
 
-def fetch_user_data(user_id):
-    url = "https://example.com/api/user/" + str(user_id)
-    r = requests.get(url, verify=False)
-    return r.text
+class LRUCache:
+    def __init__(self, capacity: int):
+        if capacity <= 0:
+            raise ValueError("capacity must be positive")
 
-def process_file(filename):
-    f = open(filename,"r")
-    data = f.read()
-    if "secret" in data:
-        print("secret found")
-    return data
+        self.capacity = capacity
+        self.cache: dict[int, Node] = {}
+        self.left = Node(-1, -1)
+        self.right = Node(-1, -1)
+        self.left.next = self.right
+        self.right.prev = self.left
+        self.lock = threading.Lock()
 
-def save_log(msg):
-    file = open("app.log","a")
-    file.write(msg + "\n")
+    def _remove(self, node: Node) -> None:
+        prev_node = node.prev
+        next_node = node.next
+        if prev_node is not None and next_node is not None:
+            prev_node.next = next_node
+            next_node.prev = prev_node
 
-def run_command(cmd):
-    return os.system(cmd)
+    def _insert(self, node: Node) -> None:
+        prev_node = self.right.prev
+        assert prev_node is not None
+        prev_node.next = node
+        node.prev = prev_node
+        node.next = self.right
+        self.right.prev = node
 
-def backup(path):
-    cmd = "cp -r " + path + " ./backup/"
-    subprocess.run(cmd,shell=True)
+    def get(self, key: int) -> int:
+        with self.lock:
+            if key not in self.cache:
+                return -1
 
-def calculate():
-    total = 0
-    for i in range(10000000):
-        for j in range(100):
-            total += i*j
-    return total
+            node = self.cache[key]
+            self._remove(node)
+            self._insert(node)
+            return node.value
 
-def bubble_sort(arr):
-    for i in range(len(arr)):
-        for j in range(len(arr)):
-            if arr[i] < arr[j]:
-                arr[i],arr[j] = arr[j],arr[i]
-    return arr
+    def put(self, key: int, value: int) -> None:
+        with self.lock:
+            if key in self.cache:
+                self._remove(self.cache[key])
 
-def load_big_data():
-    arr = []
-    for i in range(100000000):
-        arr.append(i)
-    return arr
+            node = Node(key, value)
+            self.cache[key] = node
+            self._insert(node)
 
-def recursive_forever(x):
-    return recursive_forever(x+1)
+            if len(self.cache) > self.capacity:
+                lru = self.left.next
+                assert lru is not None and lru != self.right
+                self._remove(lru)
+                del self.cache[lru.key]
 
-def memory_leak():
-    while True:
-        temp_data.append("A"*1000000)
 
-def cpu_burn():
-    while True:
-        pass
+@dataclass
+class Graph:
+    adjacency: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))
 
-def thread_spawner():
-    while True:
-        t = threading.Thread(target=cpu_burn)
-        t.start()
+    def add_edge(self, src: str, dst: str) -> None:
+        self.adjacency[src].append(dst)
+        self.adjacency.setdefault(dst, [])
 
-def parse_users():
-    data = open("users.txt").readlines()
-    users = []
-    for line in data:
-        x = line.split(",")
-        users.append({"name":x[0],"age":x[1]})
-    return users
+    def topological_sort(self) -> list[str]:
+        indegree = {node: 0 for node in self.adjacency}
 
-def weird_logic(nums):
-    result = []
-    for i in range(len(nums)):
-        for j in range(len(nums)):
-            if nums[i] == nums[j] and i != j:
-                result.append(nums[i])
-    return list(set(result))
+        for src in self.adjacency:
+            for dst in self.adjacency[src]:
+                indegree[dst] += 1
 
-def upload(filepath):
-    f = open(filepath)
-    data = f.read()
-    return data
+        queue = deque(node for node, deg in indegree.items() if deg == 0)
+        result = []
 
-def read_any_file(name):
-    return open("../../../../" + name).read()
+        while queue:
+            node = queue.popleft()
+            result.append(node)
 
-def random_sleep():
-    x = random.randint(1,100)
-    time.sleep(x)
+            for neighbor in self.adjacency[node]:
+                indegree[neighbor] -= 1
+                if indegree[neighbor] == 0:
+                    queue.append(neighbor)
 
-def auth(token):
-    if token == "mastertoken":
-        return True
-    return False
+        if len(result) != len(self.adjacency):
+            raise ValueError("Graph contains a cycle")
 
-def payment(amount):
-    if amount > 10000:
-        print("approved")
-    else:
-        print("approved")
-
-class Processor:
-    def __init__(self,data):
-        self.data=data
-
-    def run(self):
-        result=[]
-        for x in self.data:
-            for y in self.data:
-                for z in self.data:
-                    result.append(x+y+z)
         return result
 
-class Report:
-    def __init__(self):
-        self.rows=[]
 
-    def add(self,row):
-        self.rows.append(row)
+class DSU:
+    def __init__(self, size: int):
+        self.parent = list(range(size))
+        self.rank = [0] * size
 
-    def generate(self):
-        report=""
-        for r in self.rows:
-            report += str(r)
-        return report
+    def find(self, x: int) -> int:
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
 
-def duplicate_code1(data):
-    res=[]
-    for i in data:
-        if i%2==0:
-            res.append(i)
-    return res
+    def union(self, a: int, b: int) -> bool:
+        root_a = self.find(a)
+        root_b = self.find(b)
 
-def duplicate_code2(data):
-    res=[]
-    for i in data:
-        if i%2==0:
-            res.append(i)
-    return res
+        if root_a == root_b:
+            return False
 
-def duplicate_code3(data):
-    res=[]
-    for i in data:
-        if i%2==0:
-            res.append(i)
-    return res
+        if self.rank[root_a] < self.rank[root_b]:
+            root_a, root_b = root_b, root_a
 
-def race():
-    global global_cache
-    def worker():
-        for i in range(100000):
-            global_cache[i]=i
-    threads=[]
-    for i in range(100):
-        t=threading.Thread(target=worker)
-        threads.append(t)
-        t.start()
+        self.parent[root_b] = root_a
 
-def bad_exception():
-    try:
-        x = 1/0
-    except:
-        pass
+        if self.rank[root_a] == self.rank[root_b]:
+            self.rank[root_a] += 1
 
-def bad_api():
-    while True:
-        requests.get("https://google.com")
+        return True
 
-def giant_string():
-    s=""
-    for i in range(10000000):
-        s += str(i)
-    return s
 
-def data_corruption():
-    db = sqlite3.connect("users.db")
-    c = db.cursor()
-    for i in range(10000):
-        c.execute("update users set password='123456'")
-        db.commit()
+def fibonacci():
+    memo = {0: 0, 1: 1}
 
-def nonsense(a,b,c,d,e,f,g,h,i,j):
-    x = a+b+c+d+e+f+g+h+i+j
-    y = a*b*c*d*e*f*g*h*i*j
-    z = x+y
-    return z
+    def solve(n: int) -> int:
+        if n not in memo:
+            memo[n] = solve(n - 1) + solve(n - 2)
+        return memo[n]
 
+    return solve
+
+
+def primes(limit: int):
+    if limit < 2:
+        return
+
+    sieve = [True] * (limit + 1)
+    sieve[0] = sieve[1] = False
+
+    for num in range(2, int(limit**0.5) + 1):
+        if sieve[num]:
+            for multiple in range(num * num, limit + 1, num):
+                sieve[multiple] = False
+
+    for i, is_prime in enumerate(sieve):
+        if is_prime:
+            yield i
+
+
+@timer
 def main():
-    manager = usermanager()
-    manager.addUser("admin","admin")
-    manager.addUser("test","1234")
+    fib = fibonacci()
 
-    print(manager.login("admin","admin"))
+    values = [fib(i) for i in range(15)]
 
-    process_file("config.txt")
-    save_log("app started")
+    cache = LRUCache(3)
+    cache.put(1, 10)
+    cache.put(2, 20)
+    cache.put(3, 30)
+    cache.get(1)
+    cache.put(4, 40)
 
-    nums = [5,2,1,9,4]
-    print(bubble_sort(nums))
+    graph = Graph()
+    edges = [
+        ("cook", "eat"),
+        ("study", "exam"),
+        ("sleep", "work"),
+        ("eat", "sleep"),
+    ]
 
-    report = Report()
-    for i in range(1000):
-        report.add(i)
-    print(report.generate())
+    for src, dst in edges:
+        graph.add_edge(src, dst)
 
-    processor = Processor([1,2,3,4,5])
-    print(processor.run())
+    order = graph.topological_sort()
 
-    bad_exception()
+    dsu = DSU(5)
+    dsu.union(0, 1)
+    dsu.union(1, 2)
+    dsu.union(3, 4)
 
-    if True:
-        x = 1
-    else:
-        x = 2
+    prime_numbers = list(primes(50))
 
-    if False:
-        print("dead")
+    with db_connection(":memory:") as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)"
+        )
 
-    value = 0
-    while value < 10:
-        print(value)
+        users = [(1, "Alice"), (2, "Bob"), (3, "Charlie")]
+        cursor.executemany(
+            "INSERT INTO users VALUES (?, ?)",
+            users,
+        )
+        conn.commit()
 
-    for i in range(100000):
-        all_users.append(str(i))
+        cursor.execute(
+            "SELECT name FROM users WHERE id = ?",
+            (2,),
+        )
+        row = cursor.fetchone()
+        selected_name = row[0] if row else None
 
-    giant_string()
-    data_corruption()
-    race()
+    mapping = {
+        x: ("even" if x % 2 == 0 else "odd")
+        for x in range(10)
+    }
+
+    filtered = [
+        value
+        for value in values
+        if (half := value // 2) >= 0 and half <= value
+    ]
+
+    result = {
+        "fib": values,
+        "primes": prime_numbers,
+        "order": order,
+        "selected_name": selected_name,
+        "mapping": mapping,
+        "filtered": filtered,
+        "cache_hit": cache.get(1),
+        "cache_miss": cache.get(2),
+        "connected_0_2": dsu.find(0) == dsu.find(2),
+        "connected_0_4": dsu.find(0) == dsu.find(4),
+    }
+
+    return result
+
 
 if __name__ == "__main__":
-    main()
+    output = main()
+    print(output)
