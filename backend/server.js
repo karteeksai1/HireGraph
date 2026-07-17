@@ -34,14 +34,21 @@ async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function warmAiService() {
-    try {
-        const response = await axios.post(`${AI_URL}/warmup`, {}, { timeout: 20000 });
-        return { ready: response.data?.ready !== false, data: response.data };
-    } catch (err) {
-        console.warn("AI warmup failed:", err.message);
-        return { ready: false, error: err.message };
+async function warmAiService(retries = 8, delay = 10000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            await axios.get(`${AI_URL}/docs`);
+            return { ready: true };
+        } catch (error) {
+            console.warn("AI warmup failed:", error.message);
+            if (error.response && error.response.status === 429) {
+                await sleep(delay * (i + 1));
+            } else {
+                await sleep(delay);
+            }
+        }
     }
+    return { ready: false, error: 'Max retries reached' };
 }
 
 function warmAiServiceInBackground() {
@@ -162,7 +169,6 @@ app.post('/api/signup', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Fixed: Insert into password_hash instead of password
         const newUser = await pool.query(
             'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email',
             [name, email, hashedPassword]
@@ -211,9 +217,7 @@ app.post('/api/auth/google', async (req, res) => {
     try {
         let user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         
-        // If Google user doesn't exist, create an account automatically
         if (user.rows.length === 0) {
-            // Fixed: Insert into password_hash instead of password
             user = await pool.query(
                 'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email',
                 [name || 'Google User', email, 'google_oauth_user'] 
