@@ -15,6 +15,8 @@ pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 INDEX_NAME = os.environ.get("PINECONE_INDEX", "hiregraph")
 index = pc.Index(INDEX_NAME)
 hf_client = InferenceClient(token=os.environ.get("HF_API_KEY"))
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b")
+
 
 EMPTY_BOILERPLATES = {"python": "", "javascript": "", "java": "", "cpp": "", "sql": ""}
 
@@ -54,7 +56,7 @@ def generate_test_cases(domain: str, question_text: str):
     try:
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",
+            model=GROQ_MODEL,
             response_format={"type": "json_object"}
         )
         parsed = json.loads(response.choices[0].message.content)
@@ -232,7 +234,7 @@ def grade_submission(state: InterviewState):
     try:
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",
+            model=GROQ_MODEL,
             response_format={"type": "json_object"}
         )
         result = json.loads(response.choices[0].message.content)
@@ -242,8 +244,13 @@ def grade_submission(state: InterviewState):
             "metrics": result.get("metrics", {}),
             "feedback": result.get("feedback", "")
         }
-    except Exception as e:
-        return {"is_passed": False, "score": 0, "metrics": {}, "feedback": "System Error"}
+    except (json.JSONDecodeError, TypeError, KeyError) as e:
+        return {
+            "is_passed": False,
+            "score": 0,
+            "metrics": {"time_complexity": "N/A", "space_complexity": "N/A", "code_quality": "N/A"},
+            "feedback": f"Failed to parse grading response: {str(e)}"
+        }
 
 def get_chat_response(domain: str, history: list, message: str, question: str):
     history_text = "\n".join(history[-4:]) if history else ""
@@ -261,14 +268,11 @@ def get_chat_response(domain: str, history: list, message: str, question: str):
     Respond in plain text.
     """
     
-    try:
-        response = groq_client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant"
-        )
-        return response.choices[0].message.content
-    except:
-        return "Connection interrupted. Recalibrate and transmit again."
+    response = groq_client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model=GROQ_MODEL
+    )
+    return response.choices[0].message.content
 
 def dry_run_code(code: str, language: str, test_cases: list):
     prompt = f"""
@@ -281,26 +285,23 @@ def dry_run_code(code: str, language: str, test_cases: list):
     
     Return strict JSON with an array "results" containing objects with "actual_output" (string) and "passed" (boolean).
     """
+    response = groq_client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model=GROQ_MODEL,
+        response_format={"type": "json_object"}
+    )
     try:
-        response = groq_client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",
-            response_format={"type": "json_object"}
-        )
         return json.loads(response.choices[0].message.content)
-    except:
-        return {"results": [{"actual_output": "Execution Error", "passed": False}, {"actual_output": "Execution Error", "passed": False}]}
+    except (json.JSONDecodeError, TypeError):
+        return {"results": [{"actual_output": "JSON Parse Error", "passed": False}, {"actual_output": "JSON Parse Error", "passed": False}]}
 
 def warmup_model():
-    try:
-        response = groq_client.chat.completions.create(
-            messages=[{"role": "user", "content": "Reply with READY."}],
-            model="llama-3.1-8b-instant",
-            max_tokens=5
-        )
-        return {"ready": True, "reply": response.choices[0].message.content}
-    except Exception as e:
-        return {"ready": False, "error": str(e)}
+    response = groq_client.chat.completions.create(
+        messages=[{"role": "user", "content": "Reply with READY."}],
+        model=GROQ_MODEL,
+        max_tokens=5
+    )
+    return {"ready": True, "reply": response.choices[0].message.content}
 
 graph_builder = StateGraph(InterviewState)
 graph_builder.add_node("grade_submission", grade_submission)

@@ -1,13 +1,30 @@
 import os
-from fastapi import FastAPI
+from functools import wraps
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import groq
 
 load_dotenv()
 
 from agent import graph, retrieve_question, get_chat_response, dry_run_code, warmup_model
 
 app = FastAPI()
+
+def handle_groq_exceptions(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except groq.RateLimitError as e:
+            raise HTTPException(status_code=429, detail=f"Groq API Rate Limit Exceeded: {str(e)}")
+        except groq.BadRequestError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid/Deprecated Groq Model Request: {str(e)}")
+        except groq.APIError as e:
+            raise HTTPException(status_code=502, detail=f"Groq API Error: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    return wrapper
 
 class GradeRequest(BaseModel):
     topic: str
@@ -38,15 +55,18 @@ async def health_check():
     return {"status": "ok"}
 
 @app.post("/warmup")
+@handle_groq_exceptions
 async def warmup():
     return warmup_model()
 
 @app.post("/question")
+@handle_groq_exceptions
 async def get_question(request: QuestionRequest):
     result = retrieve_question({"domain": request.domain, "difficulty": request.difficulty, "previous_topic": request.previous_topic})
     return result
 
 @app.post("/grade")
+@handle_groq_exceptions
 async def evaluate_submission(request: GradeRequest):
     initial_state = {
         "topic": request.topic,
@@ -65,11 +85,13 @@ async def evaluate_submission(request: GradeRequest):
     }
 
 @app.post("/chat")
+@handle_groq_exceptions
 async def handle_chat(request: ChatRequest):
     reply = get_chat_response(request.domain, request.chat_history, request.message, request.question)
     return {"reply": reply}
 
 @app.post("/run")
+@handle_groq_exceptions
 async def handle_run(request: RunRequest):
     result = dry_run_code(request.code, request.language, request.test_cases)
     return result

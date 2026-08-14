@@ -30,25 +30,52 @@ const pool = new Pool({
 const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 120000);
 
+const activeSubmissions = new Set();
+const activeChats = new Set();
+let activeWarmupPromise = null;
+
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function warmAiService(retries = 8, delay = 10000) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            await axios.get(`${AI_URL}/docs`);
-            return { ready: true };
-        } catch (error) {
-            console.warn("AI warmup failed:", error.message);
-            if (error.response && error.response.status === 429) {
-                await sleep(delay * (i + 1));
-            } else {
-                await sleep(delay);
+    if (activeWarmupPromise) {
+        console.log("Warmup already in progress. Subscribing to active warmup sequence.");
+        return activeWarmupPromise;
+    }
+
+    activeWarmupPromise = (async () => {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const url = `${AI_URL}/health`;
+                console.log(`Polling AI service health (attempt ${i + 1}/${retries}): ${url}`);
+                const res = await axios.get(url);
+                console.log("AI service warmup succeeded! Health status:", res.data);
+                return { ready: true };
+            } catch (error) {
+                let failureType = "network error / service unavailable";
+                if (error.response) {
+                    const status = error.response.status;
+                    failureType = `HTTP status ${status}`;
+                }
+                console.warn(`AI warmup failed (attempt ${i + 1}/${retries}) due to ${failureType}: ${error.message}`);
+                
+                if (i < retries - 1) {
+                    // Exponential backoff with random jitter
+                    const backoff = Math.min(60000, delay * Math.pow(2, i)) + Math.random() * 2000;
+                    console.log(`Sleeping for ${Math.round(backoff / 1000)}s before next health poll...`);
+                    await sleep(backoff);
+                }
             }
         }
+        return { ready: false, error: 'Max retries reached' };
+    })();
+
+    try {
+        return await activeWarmupPromise;
+    } finally {
+        activeWarmupPromise = null;
     }
-    return { ready: false, error: 'Max retries reached' };
 }
 
 function warmAiServiceInBackground() {
@@ -62,12 +89,38 @@ async function postAi(path, payload, options = {}) {
 
     for (let attempt = 0; attempt <= retries; attempt += 1) {
         try {
+            console.log(`Sending POST request to AI service: ${AI_URL}${path} (attempt ${attempt + 1}/${retries + 1})`);
             return await axios.post(`${AI_URL}${path}`, payload, { timeout });
         } catch (err) {
             lastError = err;
+            
+            if (err.response) {
+                const status = err.response.status;
+                const detail = err.response.data?.detail || JSON.stringify(err.response.data) || 'Unknown detail';
+                console.error(`AI service error at ${path} (status ${status}): ${detail}`);
+                
+                // If it is 429 (Groq rate limit) or 400 (Invalid/Deprecated model), do NOT run warmAiService!
+                if (status === 429) {
+                    const errorObj = new Error(`Groq API Rate Limit Exceeded: ${detail}`);
+                    errorObj.status = 429;
+                    throw errorObj;
+                }
+                if (status === 400) {
+                    const errorObj = new Error(`Groq Model Configuration Error: ${detail}`);
+                    errorObj.status = 400;
+                    throw errorObj;
+                }
+                if (status === 502) {
+                    console.warn(`Groq API gateway error (502). Retrying...`);
+                }
+            } else {
+                console.warn(`AI service network error on ${path} (attempt ${attempt + 1}): ${err.message}`);
+            }
+
             if (attempt < retries) {
+                console.log(`Triggering AI service warmup sequence and waiting before retry...`);
                 await warmAiService();
-                await sleep(1500 * (attempt + 1));
+                await sleep(2000 * (attempt + 1));
             }
         }
     }
@@ -308,6 +361,13 @@ app.post('/api/interview/next', async (req, res) => {
 
 app.post('/api/interview/chat', async (req, res) => {
     const { sessionId, domain, message, questionText } = req.body;
+    
+    if (activeChats.has(sessionId)) {
+        return res.status(429).json({ error: 'Hint or response generation is already in progress. Please wait.' });
+    }
+    
+    activeChats.add(sessionId);
+    
     try {
         const lowerMessage = String(message).toLowerCase();
         const isHintRequest = lowerMessage.includes('hint') || lowerMessage.includes('stuck') || lowerMessage.includes('help') || lowerMessage.includes('approach');
@@ -345,7 +405,14 @@ app.post('/api/interview/chat', async (req, res) => {
         const stats = await getSessionStats(sessionId);
         res.json({ reply: aiResponse.data.reply, hintCount: stats.hintCount });
     } catch (err) {
-        res.status(500).json({ error: 'Chat failed' });
+        console.error("Chat error:", err.message);
+        const status = err.status || 500;
+        const msg = err.status === 429 
+            ? 'Groq API rate limit exceeded. Please wait a moment before trying again.'
+            : (err.status === 400 ? 'Configuration Error: Deprecated or invalid Groq model.' : 'Chat failed.');
+        res.status(status).json({ error: msg, details: err.message });
+    } finally {
+        activeChats.delete(sessionId);
     }
 });
 
@@ -357,12 +424,24 @@ app.post('/api/interview/run', async (req, res) => {
         }, { retries: 2, timeout: AI_TIMEOUT_MS });
         res.json(aiResponse.data);
     } catch (err) {
-        res.status(500).json({ error: 'Run failed' });
+        console.error("Run error:", err.message);
+        const status = err.status || 500;
+        const msg = err.status === 429 
+            ? 'Groq API rate limit exceeded. Please wait a moment before running again.'
+            : (err.status === 400 ? 'Configuration Error: Deprecated or invalid Groq model.' : 'Run failed.');
+        res.status(status).json({ error: msg, details: err.message });
     }
 });
 
 app.post('/api/interview/submit', async (req, res) => {
     const { sessionId, topic, domain, language, userCode, questionText } = req.body;
+    
+    if (activeSubmissions.has(sessionId)) {
+        return res.status(429).json({ error: 'An evaluation is already in progress for this interview session. Please wait.' });
+    }
+    
+    activeSubmissions.add(sessionId);
+    
     try {
         const existingStats = await getSessionStats(sessionId);
         const priorTopicAttempts = existingStats.evaluations.filter(evaluation => evaluation.topic === topic).length;
@@ -421,7 +500,13 @@ app.post('/api/interview/submit', async (req, res) => {
         res.json({ isPassed: is_passed, score: adjustedScore, rawScore, penalty, metrics, feedback });
     } catch (err) {
         console.error("AI evaluation failed:", err.message);
-        res.status(503).json({ error: 'AI is still booting. Please wait and submit again.' });
+        const status = err.status || 503;
+        const msg = err.status === 429 
+            ? 'Groq API rate limit exceeded. Please wait a moment before resubmitting.'
+            : (err.status === 400 ? 'Configuration Error: Deprecated or invalid Groq model.' : 'AI service is still booting or unavailable. Please wait and submit again.');
+        res.status(status).json({ error: msg, details: err.message });
+    } finally {
+        activeSubmissions.delete(sessionId);
     }
 });
 
