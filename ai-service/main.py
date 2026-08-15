@@ -16,14 +16,41 @@ def handle_groq_exceptions(func):
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
+
         except groq.RateLimitError as e:
-            raise HTTPException(status_code=429, detail=f"Groq API Rate Limit Exceeded: {str(e)}")
+            print("\n========== GROQ RATE LIMIT ERROR ==========")
+            print("ERROR:", repr(e))
+            print("STATUS:", getattr(e, "status_code", None))
+            print("BODY:", getattr(e, "body", None))
+
+            if getattr(e, "response", None):
+                print("HEADERS:", dict(e.response.headers))
+
+            print("===========================================\n")
+
+            raise HTTPException(
+                status_code=429,
+                detail=f"Groq API Rate Limit Exceeded: {str(e)}"
+            )
+
         except groq.BadRequestError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid/Deprecated Groq Model Request: {str(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid/Deprecated Groq Model Request: {str(e)}"
+            )
+
         except groq.APIError as e:
-            raise HTTPException(status_code=502, detail=f"Groq API Error: {str(e)}")
+            raise HTTPException(
+                status_code=502,
+                detail=f"Groq API Error: {str(e)}"
+            )
+
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Internal Server Error: {str(e)}"
+            )
+
     return wrapper
 
 class GradeRequest(BaseModel):
