@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { wakeAI } from '../wakeAI';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ export default function Login() {
       const response = await postWithRetry(`${backendUrl}${endpoint}`, formData);
       
       localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
+      wakeAI(true);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Authentication failed');
@@ -83,6 +85,7 @@ export default function Login() {
       });
       
       localStorage.setItem('hiregraph_user', JSON.stringify(response.data));
+      wakeAI(true);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       console.error("Full Google Error:", err);

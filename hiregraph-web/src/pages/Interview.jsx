@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
+import { wakeAI } from '../wakeAI';
 
 export default function Interview() {
   const navigate = useNavigate();
@@ -37,8 +38,18 @@ export default function Interview() {
   const [isRunning, setIsRunning] = useState(false);
   const [isFetchingNext, setIsFetchingNext] = useState(false);
   const [lastScore, setLastScore] = useState(null);
-  const [aiStatus, setAiStatus] = useState(state.aiBooting ? 'booting' : 'unknown');
+  const [submitState, setSubmitState] = useState('idle');
   const chatEndRef = useRef(null);
+  const retryTimerRef = useRef(null);
+
+  useEffect(() => {
+    wakeAI();
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!location.state && !storedInterview?.sessionId) {
@@ -66,10 +77,9 @@ export default function Interview() {
       topic,
       question: questionText,
       testCases,
-      boilerplates,
-      aiBooting: aiStatus !== 'ready'
+      boilerplates
     }));
-  }, [sessionId, candidateName, domain, difficulty, topic, questionText, testCases, boilerplates, aiStatus]);
+  }, [sessionId, candidateName, domain, difficulty, topic, questionText, testCases, boilerplates]);
 
   useEffect(() => {
     if (boilerplates && boilerplates[language]) {
@@ -83,35 +93,6 @@ export default function Interview() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  useEffect(() => {
-    if (!sessionId) return;
-
-    let cancelled = false;
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002';
-
-    const warmupAi = async () => {
-      setAiStatus('booting');
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        try {
-          const response = await axios.post(`${backendUrl}/api/ai/warmup`, {}, { timeout: 30000 });
-          if (!cancelled && response.data.ready) {
-            setAiStatus('ready');
-            return;
-          }
-        } catch {
-          // Keep the visible booting state; the next attempt may wake the service.
-        }
-        await new Promise(resolve => setTimeout(resolve, 4000));
-      }
-      if (!cancelled) setAiStatus('slow');
-    };
-
-    warmupAi();
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId]);
-
   const sendChatMessage = async () => {
     if (!chatInput.trim() || !sessionId) return;
     
@@ -120,7 +101,6 @@ export default function Interview() {
     setChatHistory(prev => [...prev, { sender: 'USER', message: userMsg }]);
 
     try {
-      if (aiStatus !== 'ready') setAiStatus('booting');
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/chat`, {
         sessionId,
         domain,
@@ -129,10 +109,8 @@ export default function Interview() {
       });
       
       setChatHistory(prev => [...prev, { sender: 'AI', message: response.data.reply }]);
-      setAiStatus('ready');
-    } catch {
-      setAiStatus('slow');
-      setChatHistory(prev => [...prev, { sender: 'AI', message: "AI is still booting. Please wait a moment and try again." }]);
+    } catch (error) {
+      setChatHistory(prev => [...prev, { sender: 'AI', message: error.response?.data?.error || "AI service is waking up, please try again in a moment." }]);
     }
   };
 
@@ -146,34 +124,32 @@ export default function Interview() {
     setTestResults(null);
     
     try {
-      if (aiStatus !== 'ready') setAiStatus('booting');
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/run`, {
         code: userCode,
         language,
         testCases
       });
       setTestResults(response.data.results);
-      setAiStatus('ready');
     } catch {
-      setAiStatus('slow');
       console.error("Run failed");
     } finally {
       setIsRunning(false);
     }
   };
 
-  const submitCode = async () => {
+  const performSubmit = async (isRetry = false) => {
     if (!sessionId || !userCode.trim()) return;
     setIsEvaluating(true);
     
-    setChatHistory(prev => [...prev, { 
-      sender: 'USER', 
-      message: `Submitted ${language} solution for evaluation.`,
-      submitted_code: userCode 
-    }]);
+    if (!isRetry) {
+      setChatHistory(prev => [...prev, { 
+        sender: 'USER', 
+        message: `Submitted ${language} solution for evaluation.`,
+        submitted_code: userCode 
+      }]);
+    }
 
     try {
-      if (aiStatus !== 'ready') setAiStatus('booting');
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/submit`, {
         sessionId,
         topic,
@@ -192,16 +168,32 @@ export default function Interview() {
         penalty: response.data.penalty
       }]);
       setLastScore(response.data.score);
-      setAiStatus('ready');
+      setSubmitState('idle');
+      setIsEvaluating(false);
     } catch (error) {
-      setAiStatus('slow');
+      if (error.response?.status === 503) {
+        if (!isRetry) {
+          setSubmitState('auto_retrying');
+          retryTimerRef.current = setTimeout(() => {
+            performSubmit(true);
+          }, 15000);
+          return;
+        } else {
+          setSubmitState('retry_ready');
+        }
+      } else {
+        setSubmitState('idle');
+      }
+      setIsEvaluating(false);
       setChatHistory(prev => [...prev, {
         sender: 'AI',
-        message: error.response?.data?.error || "AI is still booting. Please wait a moment and submit again."
+        message: error.response?.data?.error || "AI service is waking up, please try again in a moment."
       }]);
-    } finally {
-      setIsEvaluating(false);
     }
+  };
+
+  const submitCode = () => {
+    performSubmit(false);
   };
 
   const loadNextQuestion = async () => {
@@ -250,14 +242,6 @@ export default function Interview() {
 
   return (
     <div className="flex h-screen bg-[#050505] font-sans overflow-hidden">
-      {aiStatus !== 'ready' && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 rounded-lg border border-[#f0b23d]/40 bg-[#11100c] px-5 py-3 text-sm text-[#f2e6c8] shadow-2xl">
-          <span className="font-medium text-[#fff7e3]">Please wait, AI is booting up.</span>
-          <span className="ml-2 text-[#b9aa8d]">
-            The interview starts instantly; hints, run, and grading will be ready shortly.
-          </span>
-        </div>
-      )}
       <div className="w-[35%] flex flex-col border-r border-[#3a2b14] bg-[#050505] z-10 relative">
         <div className="p-4 border-b border-[#3a2b14] flex justify-between items-center bg-[#11100c]">
            <button onClick={() => navigate('/dashboard')} className="text-sm text-[#b9aa8d] hover:text-[#fff7e3] transition-colors">
@@ -339,13 +323,30 @@ export default function Interview() {
             >
               {isRunning ? 'Running...' : 'Run'}
             </button>
-            <button 
-              onClick={submitCode}
-              disabled={!sessionId || isEvaluating}
-              className="px-5 py-1.5 border border-transparent bg-[#f0b23d] hover:bg-[#d9961f] rounded-md font-medium text-xs text-[#050505] transition-colors"
-            >
-              Submit
-            </button>
+            {submitState === 'auto_retrying' ? (
+              <button 
+                disabled
+                className="px-4 py-1.5 border border-[#f0b23d]/40 bg-[#1a1710] text-[#f7c96b] rounded-md font-medium text-xs cursor-wait"
+              >
+                AI service is waking up, retrying...
+              </button>
+            ) : submitState === 'retry_ready' ? (
+              <button 
+                onClick={submitCode}
+                disabled={!sessionId || isEvaluating}
+                className="px-5 py-1.5 border border-[#f0b23d] bg-[#f0b23d] hover:bg-[#d9961f] rounded-md font-medium text-xs text-[#050505] transition-colors"
+              >
+                {isEvaluating ? 'Evaluating...' : 'Retry Submit'}
+              </button>
+            ) : (
+              <button 
+                onClick={submitCode}
+                disabled={!sessionId || isEvaluating}
+                className="px-5 py-1.5 border border-transparent bg-[#f0b23d] hover:bg-[#d9961f] rounded-md font-medium text-xs text-[#050505] transition-colors"
+              >
+                {isEvaluating ? 'Evaluating...' : 'Submit'}
+              </button>
+            )}
             
             {lastScore !== null && (
               <div className="hidden xl:flex items-center px-3 text-xs font-mono text-[#b9aa8d]">

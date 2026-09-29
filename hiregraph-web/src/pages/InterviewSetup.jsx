@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { wakeAI } from '../wakeAI';
 
 export default function InterviewSetup() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function InterviewSetup() {
     if (user && user.name) {
       setCandidateName(user.name);
       setUserId(user.id);
-      axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/ai/warmup`, {}, { timeout: 30000 }).catch(() => {});
+      wakeAI();
     } else {
       navigate('/login');
     }
@@ -70,7 +71,7 @@ export default function InterviewSetup() {
       console.error("Failed to start:", err);
       alert("Server is waking up or busy. Please wait 1 minute and try again.");
     } finally {
-      setIsStarting(false); // 2. Unlock the button no matter what happens!
+      setIsStarting(false);
     }
   };
 
