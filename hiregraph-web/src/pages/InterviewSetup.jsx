@@ -3,6 +3,39 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { wakeAI } from '../wakeAI';
 
+function IconBack() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M11 7H3M7 3L3 7L7 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
+    </svg>
+  );
+}
+
+const DOMAIN_META = {
+  dsa: {
+    label: 'Data Structures & Algorithms',
+    note: 'Arrays, graphs, DP, trees',
+  },
+  'system-design': {
+    label: 'System Design',
+    note: 'Scalability, architecture, trade-offs',
+  },
+  frontend: {
+    label: 'Frontend Engineering',
+    note: 'DOM, React, web APIs, CSS',
+  },
+  sql: {
+    label: 'Database & SQL',
+    note: 'Queries, schema design, indexing',
+  },
+};
+
+const DIFFICULTIES = [
+  { key: 'easy',   label: 'Easy',   note: 'Warm-up problems' },
+  { key: 'medium', label: 'Medium', note: 'Interview level' },
+  { key: 'hard',   label: 'Hard',   note: 'Senior / Staff level' },
+];
+
 export default function InterviewSetup() {
   const navigate = useNavigate();
   const [candidateName, setCandidateName] = useState('Candidate');
@@ -11,18 +44,9 @@ export default function InterviewSetup() {
   const [difficulty, setDifficulty] = useState('');
   const [isStarting, setIsStarting] = useState(false);
 
-  const domains = {
-    'dsa': 'Data Structures & Algorithms',
-    'system-design': 'System Design',
-    'frontend': 'Frontend Engineering',
-    'sql': 'Database & SQL'
-  };
-  
-  const difficulties = ['easy', 'medium', 'hard'];
-
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('hiregraph_user'));
-    if (user && user.name) {
+    if (user?.name) {
       setCandidateName(user.name);
       setUserId(user.id);
       wakeAI();
@@ -34,29 +58,12 @@ export default function InterviewSetup() {
   const startInterview = async () => {
     if (!domain || !difficulty || !userId) return;
     setIsStarting(true);
-    
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/start`, {
-        userId,
-        candidateName,
-        domain,
-        difficulty
-      });
-      
-      navigate('/interview', {
-        state: {
-          sessionId: response.data.sessionId,
-          question: response.data.question,
-          topic: response.data.topic,
-          testCases: response.data.testCases,
-          boilerplates: response.data.boilerplates,
-          domain,
-          difficulty,
-          candidateName,
-          aiBooting: response.data.aiBooting
-        }
-      });
-      localStorage.setItem('hiregraph_active_interview', JSON.stringify({
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/interview/start`,
+        { userId, candidateName, domain, difficulty }
+      );
+      const payload = {
         sessionId: response.data.sessionId,
         question: response.data.question,
         topic: response.data.topic,
@@ -65,93 +72,152 @@ export default function InterviewSetup() {
         domain,
         difficulty,
         candidateName,
-        aiBooting: response.data.aiBooting
-      }));
+        aiBooting: response.data.aiBooting,
+      };
+      navigate('/interview', { state: payload });
+      localStorage.setItem('hiregraph_active_interview', JSON.stringify(payload));
     } catch (err) {
-      console.error("Failed to start:", err);
-      alert("Server is waking up or busy. Please wait 1 minute and try again.");
+      console.error('Failed to start:', err);
+      alert('Server is waking up or busy. Please wait 1 minute and try again.');
     } finally {
       setIsStarting(false);
     }
   };
 
+  const ready = domain && difficulty && !isStarting;
+
   return (
-    <div className="min-h-screen bg-[#050505] font-sans flex flex-col relative overflow-hidden">
-      <div className="relative z-10 flex-1 flex flex-col max-w-5xl mx-auto w-full px-6 py-8">
-        <header className="flex justify-between items-center mb-8 border-b border-[#3a2b14] pb-5">
-          <button onClick={() => navigate('/dashboard')} className="text-sm text-[#c8b994] hover:text-[#fff7e3] transition-colors">
-            ← Back
-          </button>
-          <h1 className="text-sm font-medium text-[#b9aa8d] tracking-widest uppercase">Configuration</h1>
-        </header>
+    <div className="page-shell">
+      {/* Header */}
+      <header className="site-header">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="btn btn-ghost btn-sm"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+        >
+          <IconBack /> Dashboard
+        </button>
+        <div className="logo-mark">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <rect x="1" y="1" width="18" height="18" stroke="var(--ink)" strokeWidth="1.5"/>
+            <path d="M5 10 L10 5 L15 10 L10 15 Z" stroke="var(--accent)" strokeWidth="1.5" fill="none"/>
+          </svg>
+          HireGraph
+        </div>
+        <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.6875rem', color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          Setup
+        </div>
+      </header>
 
-        <main className="flex-1 flex flex-col justify-center w-full mx-auto">
-          <div className="mb-10">
-            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-r from-[#fff7e3] to-[#f7c96b] bg-clip-text text-transparent">
-              Session Parameters
-            </h2>
-            <p className="text-[#b9aa8d] text-sm font-light">Choose a local question instantly, then use AI for hints and scoring.</p>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Title strip */}
+        <div style={{
+          borderBottom: '1px solid var(--rule)',
+          padding: '2.5rem 3rem',
+          background: 'var(--surface)',
+        }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div className="t-subheading" style={{ marginBottom: '0.75rem' }}>Session Configuration</div>
+            <h1 className="t-heading" style={{ marginBottom: '0.5rem' }}>Configure your interview</h1>
+            <p style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.8125rem', color: 'var(--muted)' }}>
+              Questions are loaded from a local bank. AI is used for hints and evaluation only.
+            </p>
           </div>
+        </div>
 
-          <div className="space-y-8 bg-[#11100c] p-8 rounded-xl border border-[#3a2b14]">
-            <div>
-              <h3 className="text-sm font-medium mb-4 text-[#f2e6c8]">
-                1. Domain Vector
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {Object.entries(domains).map(([key, label]) => (
+        {/* Config area */}
+        <div style={{ flex: 1, padding: '2.5rem 3rem' }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+            {/* Domain */}
+            <section>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--rule)', paddingBottom: '0.5rem' }}>
+                <span className="section-num">01</span>
+                <span className="t-subheading">Domain</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1px', border: '1px solid var(--rule)' }}>
+                {Object.entries(DOMAIN_META).map(([key, meta]) => (
                   <button
                     key={key}
                     onClick={() => setDomain(key)}
-                    className={`p-4 rounded-lg border text-left transition-all duration-200 ${
-                      domain === key 
-                        ? 'border-[#f0b23d] bg-[#f0b23d]/10' 
-                        : 'border-[#3a2b14] bg-[#050505] hover:border-[#b9aa8d]'
-                    }`}
+                    className="select-btn"
+                    style={{
+                      borderRight: '1px solid var(--rule)',
+                      ...(domain === key ? {
+                        background: 'var(--ink)',
+                        color: 'var(--paper)',
+                        borderColor: 'var(--ink)',
+                      } : {}),
+                    }}
                   >
-                    <div className={`font-light text-sm ${domain === key ? 'text-[#fff7e3]' : 'text-[#c8b994]'}`}>{label}</div>
+                    <div style={{ fontWeight: domain === key ? 600 : 400, marginBottom: '0.25rem', fontSize: '0.8125rem', color: domain === key ? 'var(--paper)' : 'var(--ink)' }}>
+                      {meta.label}
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: domain === key ? '#c0b8a8' : 'var(--muted)' }}>
+                      {meta.note}
+                    </div>
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
 
-            <div className={`transition-opacity duration-300 ${domain ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-              <h3 className="text-sm font-medium mb-4 text-[#f2e6c8]">
-                2. Difficulty Level
-              </h3>
-              <div className="flex gap-3">
-                {difficulties.map(diff => (
+            {/* Difficulty */}
+            <section style={{ opacity: domain ? 1 : 0.35, pointerEvents: domain ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--rule)', paddingBottom: '0.5rem' }}>
+                <span className="section-num">02</span>
+                <span className="t-subheading">Difficulty</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', border: '1px solid var(--rule)' }}>
+                {DIFFICULTIES.map(d => (
                   <button
-                    key={diff}
-                    onClick={() => setDifficulty(diff)}
-                    className={`flex-1 py-3 rounded-lg border text-sm capitalize transition-all duration-200 ${
-                      difficulty === diff
-                        ? 'border-[#f0b23d] bg-[#f0b23d]/10 text-[#fff7e3]'
-                        : 'border-[#3a2b14] bg-[#050505] text-[#c8b994] hover:border-[#b9aa8d]'
-                    }`}
+                    key={d.key}
+                    onClick={() => setDifficulty(d.key)}
+                    className="select-btn"
+                    style={{
+                      borderRight: '1px solid var(--rule)',
+                      ...(difficulty === d.key ? {
+                        background: 'var(--ink)',
+                        color: 'var(--paper)',
+                        borderColor: 'var(--ink)',
+                      } : {}),
+                    }}
                   >
-                    {diff}
+                    <div style={{ fontWeight: difficulty === d.key ? 600 : 400, marginBottom: '0.25rem', fontSize: '0.8125rem', color: difficulty === d.key ? 'var(--paper)' : 'var(--ink)' }}>
+                      {d.label}
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: difficulty === d.key ? '#c0b8a8' : 'var(--muted)' }}>
+                      {d.note}
+                    </div>
                   </button>
                 ))}
               </div>
-            </div>
-          </div>
+            </section>
 
-          <div className="mt-8 flex justify-end">
-            <button
-              onClick={startInterview}
-              disabled={!domain || !difficulty || isStarting}
-              className={`px-8 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
-                !domain || !difficulty
-                  ? 'bg-[#1a1710] text-[#b9aa8d] cursor-not-allowed border border-[#3a2b14]' 
-                  : 'bg-[#f0b23d] hover:bg-[#d9961f] text-[#050505] shadow-sm'
-              }`}
-            >
-              {isStarting ? 'Initiating...' : 'Start Session'}
-            </button>
+            {/* Summary + CTA */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--rule)', paddingTop: '1.5rem' }}>
+              <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                {domain && difficulty ? (
+                  <span>
+                    <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{DOMAIN_META[domain]?.label}</span>
+                    {' · '}
+                    <span style={{ color: 'var(--ink)', fontWeight: 600, textTransform: 'capitalize' }}>{difficulty}</span>
+                  </span>
+                ) : (
+                  <span>Select domain and difficulty to continue</span>
+                )}
+              </div>
+              <button
+                onClick={startInterview}
+                disabled={!ready}
+                className="btn btn-primary"
+              >
+                {isStarting ? 'Starting...' : 'Begin Session →'}
+              </button>
+            </div>
+
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

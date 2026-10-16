@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+function ScoreBar({ score }) {
+  if (score === null || score === undefined) return null;
+  const pct = Math.min(100, Math.max(0, score));
+  const color = pct >= 80 ? 'var(--ink)' : pct >= 50 ? '#8C6820' : 'var(--accent)';
+  return (
+    <div style={{ marginTop: '0.375rem', height: '2px', background: 'var(--rule)', position: 'relative' }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: color }} />
+    </div>
+  );
+}
+
 export default function PastInterviews() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
@@ -11,122 +22,175 @@ export default function PastInterviews() {
     const fetchSessions = async () => {
       try {
         const userStr = localStorage.getItem('hiregraph_user');
-        if (!userStr) {
-          navigate('/login');
-          return;
-        }
-        
+        if (!userStr) { navigate('/login'); return; }
         const user = JSON.parse(userStr);
-        if (!user || !user.id) {
-          navigate('/login');
-          return;
-        }
-
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/sessions/${user.id}`);
-        
-        if (Array.isArray(response.data)) {
-          setSessions(response.data);
-        } else {
-          setSessions([]);
-        }
-      } catch (error) {
-        console.error("Failed to load past sessions:", error);
+        if (!user?.id) { navigate('/login'); return; }
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5002'}/api/sessions/${user.id}`
+        );
+        setSessions(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error('Failed to load sessions:', err);
         setSessions([]);
       } finally {
         setLoading(false);
       }
     };
-    
     fetchSessions();
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-[#050505] font-sans flex flex-col relative overflow-hidden">
-      <div className="relative z-10 flex-1 flex flex-col">
-        <div className="border-b border-[#3a2b14] px-8 py-5 flex justify-between items-center max-w-5xl mx-auto w-full bg-[#050505]/80 backdrop-blur-sm">
-          <div className="flex items-center gap-6">
-             <button onClick={() => navigate('/dashboard')} className="text-sm text-[#c8b994] hover:text-[#fff7e3] transition-colors">
-              ← Back to Dashboard
-            </button>
-            <h1 className="text-xl font-medium text-[#fff7e3] tracking-tight">HireGraph</h1>
-          </div>
+    <div className="page-shell">
+      {/* Header */}
+      <header className="site-header">
+        <button onClick={() => navigate('/dashboard')} className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M7 3L3 7L7 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
+          </svg>
+          Dashboard
+        </button>
+        <div className="logo-mark">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <rect x="1" y="1" width="18" height="18" stroke="var(--ink)" strokeWidth="1.5"/>
+            <path d="M5 10 L10 5 L15 10 L10 15 Z" stroke="var(--accent)" strokeWidth="1.5" fill="none"/>
+          </svg>
+          HireGraph
         </div>
+        <button onClick={() => navigate('/setup')} className="btn btn-primary btn-sm">
+          + New Session
+        </button>
+      </header>
 
-        <main className="flex-1 flex flex-col max-w-5xl w-full mx-auto p-8">
-          <div className="mb-12">
-            <h2 className="text-3xl font-semibold mb-3 bg-linear-to-r from-[#fff7e3] to-[#f7c96b] bg-clip-text text-transparent">
-              Past Sessions
-            </h2>
-            <p className="text-[#b9aa8d] text-sm font-light">Review your archival interview data and AI evaluations.</p>
-          </div>
+      {/* Title strip */}
+      <div style={{ borderBottom: '1px solid var(--rule)', padding: '2.5rem 3rem', background: 'var(--surface)' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+          <div className="t-subheading" style={{ marginBottom: '0.75rem' }}>Session History</div>
+          <h1 className="t-heading" style={{ marginBottom: '0.5rem' }}>Past Interviews</h1>
+          <p style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.8125rem', color: 'var(--muted)' }}>
+            Review archived evaluations and AI analysis.
+          </p>
+        </div>
+      </div>
 
+      {/* Content */}
+      <main style={{ flex: 1, padding: '2.5rem 3rem', overflowY: 'auto' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
           {loading ? (
-            <div className="text-[#b9aa8d] animate-pulse text-sm">Accessing archives...</div>
+            <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.75rem', color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }} className="blinking">
+              Loading archive...
+            </div>
           ) : sessions.length === 0 ? (
-            <div className="bg-[#11100c] p-8 rounded-xl border border-[#3a2b14] text-center">
-              <div className="text-[#b9aa8d] mb-6 text-sm">No past sessions found in the archive.</div>
-              <button 
-                onClick={() => navigate('/setup')}
-                className="bg-[#1a1710] text-[#f2e6c8] border border-[#3a2b14] px-6 py-2 rounded-md hover:border-[#f0b23d] hover:text-[#fff7e3] transition-colors text-sm"
-              >
-                Start New Session
+            <div style={{ border: '1px solid var(--rule)', padding: '3rem', textAlign: 'center', background: 'var(--surface)' }}>
+              <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.8125rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>
+                No sessions found in the archive.
+              </div>
+              <button onClick={() => navigate('/setup')} className="btn btn-primary">
+                Start First Session
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {sessions.map((session) => (
-                <div 
-                  key={session.id}
-                  onClick={() => session.status === 'completed' && navigate(`/scorecard/${session.id}`)}
-                  className={`bg-[#11100c] p-6 rounded-xl border transition-all duration-200 group ${
-                    session.status === 'completed' 
-                      ? 'border-[#3a2b14] hover:border-[#f0b23d]/50 cursor-pointer' 
-                      : 'border-[#3a2b14] opacity-50 cursor-not-allowed'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h3 className={`text-lg font-medium mb-1 ${session.status === 'completed' ? 'text-[#f2e6c8] group-hover:text-[#fff7e3] transition-colors' : 'text-[#b9aa8d]'}`}>
-                        {session.topic}
-                      </h3>
-                      <div className="text-xs text-[#b9aa8d]">
-                        {session.start_time ? new Date(session.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown Date'}
+            <>
+              {/* Table header */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 120px 80px 100px',
+                gap: '1rem',
+                padding: '0.5rem 1rem',
+                borderBottom: '2px solid var(--ink)',
+                fontFamily: 'IBM Plex Mono',
+                fontSize: '0.5625rem',
+                fontWeight: 700,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+              }}>
+                <div>Topic</div>
+                <div>Date</div>
+                <div style={{ textAlign: 'center' }}>Score</div>
+                <div style={{ textAlign: 'right' }}>Status</div>
+              </div>
+
+              {/* Session rows */}
+              <div style={{ border: '1px solid var(--rule)', borderTop: 'none' }}>
+                {sessions.map((session, idx) => {
+                  const isCompleted = session.status === 'completed';
+                  const score = session.avg_score || session.final_score;
+                  const scoreColor = !score ? 'var(--muted)' : score >= 80 ? 'var(--ink)' : score >= 50 ? '#8C6820' : 'var(--accent)';
+
+                  return (
+                    <div
+                      key={session.id}
+                      onClick={() => isCompleted && navigate(`/scorecard/${session.id}`)}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 120px 80px 100px',
+                        gap: '1rem',
+                        padding: '1rem',
+                        borderBottom: idx < sessions.length - 1 ? '1px solid var(--rule)' : 'none',
+                        background: 'var(--paper)',
+                        cursor: isCompleted ? 'pointer' : 'default',
+                        opacity: isCompleted ? 1 : 0.5,
+                        transition: 'background 0.1s',
+                      }}
+                      onMouseEnter={e => { if (isCompleted) e.currentTarget.style.background = 'var(--surface)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--paper)'; }}
+                    >
+                      {/* Topic */}
+                      <div>
+                        <div style={{ fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 500, fontSize: '0.9375rem', color: 'var(--ink)', marginBottom: '0.25rem' }}>
+                          {session.topic || 'Unknown Topic'}
+                        </div>
+                        <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.6875rem', color: 'var(--muted)' }}>
+                          ID: {session.id?.toString().substring(0, 8) || 'N/A'}
+                          {session.questions_answered ? ` · ${session.questions_answered} question${Number(session.questions_answered) === 1 ? '' : 's'}` : ''}
+                        </div>
+                      </div>
+
+                      {/* Date */}
+                      <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.75rem', color: 'var(--muted)', alignSelf: 'center' }}>
+                        {session.start_time
+                          ? new Date(session.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Unknown'}
+                      </div>
+
+                      {/* Score */}
+                      <div style={{ alignSelf: 'center', textAlign: 'center' }}>
+                        {isCompleted && score !== null && score !== undefined ? (
+                          <>
+                            <div style={{ fontFamily: 'IBM Plex Mono', fontWeight: 700, fontSize: '1rem', color: scoreColor }}>
+                              {score}
+                            </div>
+                            <ScoreBar score={score} />
+                          </>
+                        ) : (
+                          <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.75rem', color: 'var(--muted)' }}>—</span>
+                        )}
+                      </div>
+
+                      {/* Status */}
+                      <div style={{ alignSelf: 'center', textAlign: 'right' }}>
+                        {isCompleted ? (
+                          <span className="badge badge-pass">
+                            Completed →
+                          </span>
+                        ) : (
+                          <span className="badge badge-neutral">
+                            In Progress
+                          </span>
+                        )}
                       </div>
                     </div>
-                    {session.status === 'completed' && (
-                      <span className="text-[#f0b23d] group-hover:translate-x-1 transition-transform duration-200">→</span>
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-between items-end">
-                    <div className="text-xs font-mono text-[#b9aa8d]">ID: {session.id ? session.id.toString().substring(0,8) : 'N/A'}</div>
-                    <div className="font-medium text-right">
-                      {session.status === 'completed' ? (
-                        <div className="flex flex-col items-end gap-2">
-                        <span className={`px-2 py-1 rounded text-xs border ${
-                          session.final_score >= 80 ? 'bg-[#f0b23d]/10 text-[#f0b23d] border-[#f0b23d]/30' : 
-                          session.final_score >= 50 ? 'bg-[#f0b23d]/10 text-[#f0b23d] border-[#f0b23d]/30' : 
-                          'bg-[#f0b23d]/10 text-[#f0b23d] border-[#f0b23d]/30'
-                        }`}>
-                          Avg: {session.avg_score || session.final_score || 0}/100
-                        </span>
-                        <span className="text-[11px] text-[#b9aa8d] font-mono">
-                          {session.questions_answered || 0} question{Number(session.questions_answered) === 1 ? '' : 's'}
-                        </span>
-                        </div>
-                      ) : (
-                        <span className="bg-[#1a1710] text-[#b9aa8d] border border-[#3a2b14] px-2 py-1 rounded text-xs">
-                          In Progress
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ marginTop: '1rem', fontFamily: 'IBM Plex Mono', fontSize: '0.625rem', color: 'var(--muted)', letterSpacing: '0.1em' }}>
+                {sessions.length} session{sessions.length !== 1 ? 's' : ''} total
+              </div>
+            </>
           )}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

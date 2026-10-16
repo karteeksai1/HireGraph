@@ -1,71 +1,177 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+// Inline SVG icons — no emoji, no icon font
+function IconArrow() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
+    </svg>
+  );
+}
+
+function IconHistory() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.25"/>
+      <path d="M9 5V9.5L12 11.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="square"/>
+    </svg>
+  );
+}
+
+function IconPlay() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+      <rect x="1.5" y="1.5" width="15" height="15" stroke="currentColor" strokeWidth="1.25"/>
+      <path d="M7 5.5L13 9L7 12.5V5.5Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const storedUser = JSON.parse(localStorage.getItem('hiregraph_user') || '{}');
   const firstName = storedUser.name ? storedUser.name.split(' ')[0] : 'Engineer';
 
   useEffect(() => {
-    if (!storedUser.name) {
-      navigate('/login');
-    }
+    if (!storedUser.name) navigate('/login');
   }, [navigate, storedUser.name]);
 
+  const cards = [
+    {
+      id: 'history',
+      label: '01',
+      title: 'Session Archive',
+      desc: 'Review past evaluations, AI feedback, and per-question score breakdowns.',
+      icon: <IconHistory />,
+      action: () => navigate('/past-interviews'),
+    },
+    {
+      id: 'new',
+      label: '02',
+      title: 'New Session',
+      desc: 'Select a domain and difficulty. A question is loaded instantly.',
+      icon: <IconPlay />,
+      action: () => navigate('/setup'),
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#050505] font-sans flex flex-col relative overflow-hidden">
-      <div className="relative z-10 flex-1 flex flex-col w-full">
-        <div className="border-b border-[#3a2b14] px-6 md:px-8 py-5 flex justify-between items-center max-w-6xl mx-auto w-full bg-[#050505]/80 backdrop-blur-sm">
-          <h1 className="text-xl font-medium text-[#fff7e3] tracking-tight">HireGraph</h1>
-          <button
-            onClick={() => {
-              localStorage.removeItem('hiregraph_user');
-              navigate('/login');
-            }}
-            className="text-sm text-[#c8b994] hover:text-[#fff7e3] transition-colors"
-          >
-            Log Out
-          </button>
+    <div className="page-shell">
+      {/* Header */}
+      <header className="site-header">
+        <div className="logo-mark">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <rect x="1" y="1" width="18" height="18" stroke="var(--ink)" strokeWidth="1.5"/>
+            <path d="M5 10 L10 5 L15 10 L10 15 Z" stroke="var(--accent)" strokeWidth="1.5" fill="none"/>
+          </svg>
+          HireGraph
         </div>
+        <button
+          onClick={() => {
+            localStorage.removeItem('hiregraph_user');
+            navigate('/login');
+          }}
+          className="btn btn-ghost btn-sm"
+        >
+          Sign Out
+        </button>
+      </header>
 
-        <main className="flex-1 flex items-center justify-center px-6 py-12">
-          <div className="w-full max-w-6xl">
-            <div className="text-center mb-12 z-10 relative">
-              <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-[#fff7e3] mb-5">
-                Welcome back, <span className="text-[#f0b23d]">{firstName}</span>
-              </h1>
-              <p className="text-[#f2e6c8] text-base md:text-xl max-w-3xl mx-auto leading-relaxed font-medium shadow-sm">
-                Practice technical interviews with AI-powered feedback. Pick a domain, select your
-                topic, and elevate your engineering skills.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div
-              onClick={() => navigate('/past-interviews')}
-              className="bg-[#11100c] p-8 rounded-xl border border-[#3a2b14] hover:border-[#f0b23d]/50 cursor-pointer transition-all duration-200 group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-medium text-[#f2e6c8] group-hover:text-[#fff7e3] transition-colors">Past Interviews</h3>
-                <span className="text-[#f0b23d] group-hover:translate-x-1 transition-transform duration-200">→</span>
-              </div>
-              <p className="text-[#c0ad83] text-sm leading-relaxed font-light">Review your previous sessions, analyze your scores, and study the AI's complex technical feedback.</p>
-            </div>
-
-            <div
-              onClick={() => navigate('/setup')}
-              className="bg-[#11100c] p-8 rounded-xl border border-[#3a2b14] hover:border-[#f0b23d]/50 cursor-pointer transition-all duration-200 group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-medium text-[#f2e6c8] group-hover:text-[#fff7e3] transition-colors">Start New Session</h3>
-                <span className="text-[#f0b23d] group-hover:translate-x-1 transition-transform duration-200">→</span>
-              </div>
-              <p className="text-[#c0ad83] text-sm leading-relaxed font-light">Choose an engineering domain and specific technical topic to launch a fresh, interactive interview environment.</p>
-            </div>
+      {/* Hero strip */}
+      <div
+        style={{
+          borderBottom: '1px solid var(--rule)',
+          padding: '3rem 3rem 2.5rem',
+          background: 'var(--surface)',
+        }}
+      >
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+          <div className="t-subheading" style={{ marginBottom: '0.75rem' }}>
+            Dashboard
           </div>
-          </div>
-        </main>
+          <h1
+            className="t-display"
+            style={{ marginBottom: '1rem' }}
+          >
+            {firstName}
+            <span style={{ color: 'var(--accent)', marginLeft: '0.125em' }}>.</span>
+          </h1>
+          <p className="t-body" style={{ color: 'var(--muted)', maxWidth: '560px' }}>
+            AI-powered technical interview practice. Choose a domain, solve a problem, and receive structured evaluation.
+          </p>
+        </div>
       </div>
+
+      {/* Cards */}
+      <main style={{ flex: 1, padding: '2.5rem 3rem' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+          <div className="t-subheading" style={{ marginBottom: '1.5rem' }}>
+            What to do next
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1px', border: '1px solid var(--rule)' }}>
+            {cards.map((card) => (
+              <button
+                key={card.id}
+                onClick={card.action}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: '1.25rem',
+                  padding: '2rem',
+                  background: 'var(--paper)',
+                  border: 'none',
+                  borderRight: '1px solid var(--rule)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--paper)'}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+                  <span style={{ color: 'var(--accent)', fontFamily: 'IBM Plex Mono', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em' }}>
+                    {card.label}
+                  </span>
+                  <span style={{ color: 'var(--muted)' }}>
+                    {card.icon}
+                  </span>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 600, fontSize: '1.1875rem', color: 'var(--ink)', marginBottom: '0.5rem' }}>
+                    {card.title}
+                  </div>
+                  <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.8125rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+                    {card.desc}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--ink)', fontFamily: 'IBM Plex Mono', fontSize: '0.6875rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Open <IconArrow />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer style={{
+        borderTop: '1px solid var(--rule)',
+        padding: '1rem 3rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.6875rem', color: 'var(--muted)' }}>
+            HireGraph
+          </span>
+          <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.6875rem', color: 'var(--muted)' }}>
+            AI Interview Practice
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }
